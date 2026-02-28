@@ -1,1495 +1,1772 @@
-    :root {
-            /* Theme Variables */
-            --primary: #ff5011;
-            --secondary: #333333;
-            --bg-dark: #000000;
-            --bg-darker: #050505;
-            --bg-card: #121212;
-            --bg-hover: #1a1a1a;
+<script type="module">
+    // --- FIREBASE INITIALIZATION ---
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { 
+        getAuth, 
+        signInWithEmailAndPassword, 
+        createUserWithEmailAndPassword, 
+        signOut, 
+        onAuthStateChanged,
+        updateProfile
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+    import { 
+        getFirestore, 
+        collection, 
+        doc, 
+        setDoc, 
+        getDoc, 
+        onSnapshot,
+        query,
+        where,
+        serverTimestamp,
+        deleteDoc,
+        writeBatch
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    
+    // Firebase configuration (YOU WILL REPLACE THIS WITH YOUR OWN)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Configure Chart.js for Dark Mode
+    Chart.defaults.color = 'hsl(242, 8%, 70%)';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- TRANSLATION DATA (unchanged) ---
+        const translations = {
+            en: {
+                domainManager: "Domain Vault",
+                brandName: "DOMAIN VAULT",
+                brandSlogan: "Secure Domain Portfolio Manager",
+                dashboard: "Dashboard",
+                allDomains: "All Domains",
+                domainProviders: "Domain Providers",
+                toolsResources: "Tools & Resources",
+                calendar: "Calendar",
+                notifications: "Notifications",
+                settings: "Settings",
+                searchPlaceholder: "Search domains...",
+                dashboardOverview: "Dashboard Overview",
+                addNewDomain: "Add New Domain",
+                totalDomains: "Total Domains",
+                annualCost: "Annual Cost",
+                expiringSoon: "Expiring Soon",
+                renewalCostsByMonth: "Renewal Costs by Month",
+                providersDistribution: "Providers Distribution",
+                domainName: "Domain Name",
+                provider: "Provider",
+                renewalDate: "Renewal Date",
+                price: "Price",
+                status: "Status",
+                actions: "Actions",
+                addNewProvider: "Add New Provider",
+                userProfile: "User Profile",
+                profilePicture: "Profile Picture",
+                changePicture: "Change Picture",
+                remove: "Remove",
+                username: "Username",
+                enterYourName: "Enter your name",
+                saveProfile: "Save Profile",
+                appearance: "Appearance",
+                themeColor: "Theme Accent Color",
+                customColor: "Custom Accent Color",
+                footer: "Powered by Project Freedom ✊",
+                addDomain: "Add Domain",
+                editDomain: "Edit Domain",
+                otherProviderName: "Other Provider Name",
+                specifyProvider: "Specify provider",
+                purchaseDate: "Purchase Date",
+                purchasePrice: "Purchase Price",
+                annualRenewalPrice: "Renewal Price",
+                providerName: "Provider Name",
+                homepageUrl: "Provider Homepage URL",
+                emailUsername: "Email / Username",
+                password: "Password",
+                userIdOptional: "User ID (optional)",
+                autoRenewalOn: "Automatic Renewal is On",
+                addProvider: "Add Provider",
+                editProvider: "Edit Provider",
+                providerCredentials: "Provider Credentials",
+                userId: "User ID",
+                domainsRegistered: "Domains Registered",
+                autoRenewal: "Auto Renewal",
+                on: "On",
+                off: "Off",
+                openPage: "Website",
+                viewCredentials: "Credentials",
+                statusActive: "Active",
+                statusExpiringIn: "Expiring in {days}d",
+                statusExpired: "Expired",
+                noDomainsFound: "No domains found.",
+                noNotifications: "No notifications right now.",
+                totalInvestment: "Total Investment",
+                syncAllGCal: "Sync to Google",
+                downloadAllIcs: "Download (.ics)",
+                dayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                urgentRenewals: "Top 5 Urgent Renewals",
+                daysLeft: "Days Left",
+                dnsRecords: "DNS Records",
+                recordType: "Type",
+                recordValue: "Value",
+                autoFillWhois: "Auto-fill using WHOIS",
+                fetching: "Fetching live records...",
+                noDnsFound: "No DNS records found.",
+                whoisSuccess: "Data loaded from WHOIS!",
+                whoisError: "Could not fetch WHOIS data.",
+                toolsDesc: "Explore our curated list of tools to help you manage your domains, check DNS records, and improve your online infrastructure.",
+                recommendedProviders: "Recommended Providers",
+                getDeal: "Get Deal",
+                visitTool: "Visit Tool",
+                recommendations: "Recommendations",
+                searchRecommendations: "Search hosting, email...",
+                quickDnsCheck: "Quick DNS Check",
+                enterDomainName: "Enter domain name...",
+                checkDns: "Check DNS",
+                others: "Others",
+                other: "Other",
+                // Auth translations
+                login: "Login",
+                signup: "Sign Up",
+                logout: "Logout",
+                email: "Email",
+                password: "Password",
+                confirmPassword: "Confirm Password",
+                dontHaveAccount: "Don't have an account?",
+                alreadyHaveAccount: "Already have an account?",
+                loginError: "Invalid email or password",
+                signupError: "Error creating account",
+                passwordMismatch: "Passwords don't match",
+                welcomeBack: "Welcome back!",
+                accountCreated: "Account created successfully!"
+            },
+            es: {
+                domainManager: "Domain Vault",
+                brandName: "DOMAIN VAULT",
+                brandSlogan: "Gestor Seguro de Dominios",
+                dashboard: "Tablero",
+                allDomains: "Todos los Dominios",
+                domainProviders: "Proveedores",
+                toolsResources: "Herramientas",
+                calendar: "Calendario",
+                notifications: "Notificaciones",
+                settings: "Configuración",
+                searchPlaceholder: "Buscar dominios...",
+                dashboardOverview: "Resumen del Tablero",
+                addNewDomain: "Añadir Dominio",
+                totalDomains: "Dominios Totales",
+                annualCost: "Costo Anual",
+                expiringSoon: "Próximos a Vencer",
+                renewalCostsByMonth: "Costos de Renovación por Mes",
+                providersDistribution: "Distribución de Proveedores",
+                domainName: "Nombre de Dominio",
+                provider: "Proveedor",
+                renewalDate: "Fecha de Renovación",
+                price: "Precio",
+                status: "Estado",
+                actions: "Acciones",
+                addNewProvider: "Añadir Proveedor",
+                userProfile: "Perfil de Usuario",
+                profilePicture: "Foto de Perfil",
+                changePicture: "Cambiar Foto",
+                remove: "Eliminar",
+                username: "Nombre de usuario",
+                enterYourName: "Introduce tu nombre",
+                saveProfile: "Guardar Perfil",
+                appearance: "Apariencia",
+                themeColor: "Color de Acento",
+                customColor: "Color Personalizado",
+                footer: "Desarrollado por Project Freedom ✊",
+                addDomain: "Guardar Dominio",
+                editDomain: "Editar Dominio",
+                otherProviderName: "Nombre de Otro Proveedor",
+                specifyProvider: "Especificar proveedor",
+                purchaseDate: "Fecha de Compra",
+                purchasePrice: "Precio de Compra",
+                annualRenewalPrice: "Precio de Renovación",
+                providerName: "Nombre del Proveedor",
+                homepageUrl: "URL de la Página",
+                emailUsername: "Correo / Usuario",
+                password: "Contraseña",
+                userIdOptional: "ID de Usuario (opcional)",
+                autoRenewalOn: "Renovación Automática Activada",
+                addProvider: "Guardar Proveedor",
+                editProvider: "Editar Proveedor",
+                providerCredentials: "Credenciales",
+                userId: "ID de Usuario",
+                domainsRegistered: "Dominios Registrados",
+                autoRenewal: "Renovación Automática",
+                on: "Activado",
+                off: "Desactivado",
+                openPage: "Sitio Web",
+                viewCredentials: "Credenciales",
+                statusActive: "Activo",
+                statusExpiringIn: "Vence en {days}d",
+                statusExpired: "Vencido",
+                noDomainsFound: "No se encontraron dominios.",
+                noNotifications: "No hay notificaciones en este momento.",
+                totalInvestment: "Inversión Total",
+                syncAllGCal: "Sincronizar a Google",
+                downloadAllIcs: "Descargar (.ics)",
+                dayNames: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+                urgentRenewals: "Top 5 Próximas Renovaciones",
+                daysLeft: "Días Restantes",
+                dnsRecords: "Registros DNS",
+                recordType: "Tipo",
+                recordValue: "Valor",
+                autoFillWhois: "Autocompletar usando WHOIS",
+                fetching: "Obteniendo registros...",
+                noDnsFound: "No se encontraron registros DNS.",
+                whoisSuccess: "¡Datos cargados vía WHOIS!",
+                whoisError: "No se pudo obtener datos WHOIS.",
+                toolsDesc: "Explora nuestra lista seleccionada de herramientas para ayudarte a gestionar tus dominios y verificar registros DNS.",
+                recommendedProviders: "Proveedores Recomendados",
+                getDeal: "Obtener Oferta",
+                visitTool: "Visitar Herramienta",
+                recommendations: "Recomendaciones",
+                searchRecommendations: "Buscar hosting, correo...",
+                quickDnsCheck: "Comprobación Rápida DNS",
+                enterDomainName: "Ingrese nombre de dominio...",
+                checkDns: "Comprobar DNS",
+                others: "Otros",
+                other: "Otro",
+                // Auth translations
+                login: "Iniciar Sesión",
+                signup: "Registrarse",
+                logout: "Cerrar Sesión",
+                email: "Correo",
+                password: "Contraseña",
+                confirmPassword: "Confirmar Contraseña",
+                dontHaveAccount: "¿No tienes cuenta?",
+                alreadyHaveAccount: "¿Ya tienes cuenta?",
+                loginError: "Correo o contraseña inválidos",
+                signupError: "Error al crear cuenta",
+                passwordMismatch: "Las contraseñas no coinciden",
+                welcomeBack: "¡Bienvenido de nuevo!",
+                accountCreated: "¡Cuenta creada exitosamente!"
+            }
+        };
+        
+        // --- DOM ELEMENTS (unchanged) ---
+        const menuToggle = document.querySelector('.menu-toggle');
+        const mobileNav = document.getElementById('mobileNav');
+        const mobileNavClose = document.querySelector('.mobile-nav-close');
+        const navOverlay = document.getElementById('navOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        const sidebarFooter = document.querySelector('.sidebar-footer');
+        
+        mobileNav.appendChild(sidebarMenu.cloneNode(true));
+        if (sidebarFooter) mobileNav.appendChild(sidebarFooter.cloneNode(true));
+        
+        const addDomainBtn = document.getElementById('addDomainBtn');
+        const addDomainBtnSecondary = document.getElementById('addDomainBtnSecondary');
+        const domainModal = document.getElementById('domainModal');
+        const domainForm = document.getElementById('domainForm');
+        const domainsTableBody = document.getElementById('domainsTableBody');
+
+        const addProviderBtn = document.getElementById('addProviderBtn');
+        const providerModal = document.getElementById('providerModal');
+        const providerForm = document.getElementById('providerForm');
+        const providersGrid = document.getElementById('providersGrid');
+        const credentialsModal = document.getElementById('credentialsModal');
+        const togglePassword = document.getElementById('togglePassword');
+        
+        const notificationsContainer = document.getElementById('persistent-notifications-container');
+        const notificationsList = document.getElementById('notificationsList');
+        const headerNotificationIcon = document.getElementById('headerNotificationIcon');
+        const translateBtn = document.getElementById('translateBtn');
+
+        const settingsProfileForm = document.getElementById('settingsProfileForm');
+        const colorPalette = document.getElementById('colorPalette');
+        const customColorPicker = document.getElementById('customColorPicker');
+        const userNameEl = document.getElementById('userName');
+        const userAvatarEl = document.getElementById('userAvatar');
+        const settingsAvatarPreview = document.getElementById('settingsAvatarPreview');
+        const profilePicUpload = document.getElementById('profilePicUpload');
+        const uploadPicBtn = document.getElementById('uploadPicBtn');
+        const removePicBtn = document.getElementById('removePicBtn');
+        const costCard = document.getElementById('cost-card');
+
+        // Calendar Elements
+        const calendarGrid = document.getElementById('calendarGrid');
+        const currentMonthYearEl = document.getElementById('currentMonthYear');
+        const prevMonthBtn = document.getElementById('prevMonthBtn');
+        const nextMonthBtn = document.getElementById('nextMonthBtn');
+        const syncGCalBtn = document.getElementById('syncGCalBtn');
+        const downloadIcsBtn = document.getElementById('downloadIcsBtn');
+        const calendarDayNamesEl = document.getElementById('calendarDayNames');
+
+        // DNS & WHOIS Elements
+        const dnsModal = document.getElementById('dnsModal');
+        const dnsDomainLabel = document.getElementById('dnsDomainLabel');
+        const dnsLoading = document.getElementById('dnsLoading');
+        const dnsTableWrapper = document.getElementById('dnsTableWrapper');
+        const dnsTableBody = document.getElementById('dnsTableBody');
+        const dnsError = document.getElementById('dnsError');
+        const fetchWhoisBtn = document.getElementById('fetchWhoisBtn');
+        const whoisStatus = document.getElementById('whoisStatus');
+        const urgentRenewalsBody = document.getElementById('urgentRenewalsBody');
+        
+        // New Tools & Rec Elements
+        const quickDnsInput = document.getElementById('quickDnsInput');
+        const quickDnsBtn = document.getElementById('quickDnsBtn');
+
+        // Auth Modal Elements (you'll need to add these to your HTML)
+        const authModal = document.getElementById('authModal');
+        const authForm = document.getElementById('authForm');
+        const authToggleBtn = document.getElementById('authToggleBtn');
+        const authTitle = document.getElementById('authTitle');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const authError = document.getElementById('authError');
+
+        // Create auth modal HTML if it doesn't exist
+        if (!authModal) {
+            createAuthModal();
+        }
+
+        // --- STATE MANAGEMENT (Firestore-based) ---
+        let domains = [];
+        let providers = [];
+        let notifications = [];
+        let settings = {};
+        let currentCalendarDate = new Date();
+        let currentToolFilter = 'all';
+        let currentUser = null;
+        let unsubscribeDomains = null;
+        let unsubscribeProviders = null;
+        let unsubscribeSettings = null;
+        let unsubscribeNotifications = null;
+
+        const colorThemes = {
+            orange: { primary: '#ff5011' },
+            cyan: { primary: '#17A2B8' },
+            green: { primary: '#51cf66' },
+            purple: { primary: '#9370DB' },
+            pink: { primary: '#DF1783' }
+        };
+
+        // --- FIREBASE AUTH FUNCTIONS ---
+        const showAuthModal = () => {
+            if (authModal) {
+                authModal.style.display = 'flex';
+                authForm.reset();
+                authError.style.display = 'none';
+            }
+        };
+
+        const hideAuthModal = () => {
+            if (authModal) {
+                authModal.style.display = 'none';
+            }
+        };
+
+        const toggleAuthMode = () => {
+            const isLogin = authTitle.textContent.includes('Login');
+            if (isLogin) {
+                authTitle.textContent = translations[settings.language].signup;
+                authSubmitBtn.textContent = translations[settings.language].signup;
+                authToggleBtn.innerHTML = `${translations[settings.language].alreadyHaveAccount} <a href="#">${translations[settings.language].login}</a>`;
+                document.getElementById('confirmPasswordGroup').style.display = 'block';
+            } else {
+                authTitle.textContent = translations[settings.language].login;
+                authSubmitBtn.textContent = translations[settings.language].login;
+                authToggleBtn.innerHTML = `${translations[settings.language].dontHaveAccount} <a href="#">${translations[settings.language].signup}</a>`;
+                document.getElementById('confirmPasswordGroup').style.display = 'none';
+            }
+        };
+
+        const handleAuth = async (email, password, confirmPassword) => {
+            const isLogin = authTitle.textContent.includes('Login');
             
-            --text-main: #f5f5f5;
-            --text-muted: #a0a0a0;
-            --border: rgba(255, 255, 255, 0.1);
+            try {
+                if (isLogin) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast(translations[settings.language].welcomeBack);
+                } else {
+                    if (password !== confirmPassword) {
+                        throw new Error(translations[settings.language].passwordMismatch);
+                    }
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    
+                    // Initialize user data in Firestore
+                    const user = userCredential.user;
+                    await initializeUserData(user.uid);
+                    
+                    showToast(translations[settings.language].accountCreated);
+                }
+                hideAuthModal();
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.style.display = 'block';
+            }
+        };
+
+        const initializeUserData = async (userId) => {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userRef);
             
-            --success: #51cf66;
-            --warning: #ffd43b;
-            --danger: #ef4444;
+            if (!userDoc.exists()) {
+                // Create default user data
+                const defaultSettings = {
+                    username: 'User',
+                    theme: 'orange',
+                    customColor: null,
+                    profilePicture: null,
+                    language: 'en',
+                    createdAt: serverTimestamp()
+                };
+                
+                await setDoc(userRef, defaultSettings);
+                
+                // Initialize empty collections
+                await setDoc(doc(db, 'users', userId, 'data', 'domains'), { items: [] });
+                await setDoc(doc(db, 'users', userId, 'data', 'providers'), { items: [] });
+                await setDoc(doc(db, 'users', userId, 'data', 'notifications'), { items: [] });
+            }
+        };
+
+        const signOutUser = async () => {
+            try {
+                await signOut(auth);
+                showToast('Logged out successfully');
+            } catch (error) {
+                showToast(error.message, 'danger');
+            }
+        };
+
+        // --- FIREBASE DATA SYNC FUNCTIONS ---
+        const setupFirestoreListeners = (userId) => {
+            // Unsubscribe from previous listeners
+            if (unsubscribeDomains) unsubscribeDomains();
+            if (unsubscribeProviders) unsubscribeProviders();
+            if (unsubscribeSettings) unsubscribeSettings();
+            if (unsubscribeNotifications) unsubscribeNotifications();
+
+            // Settings listener (single document)
+            const userRef = doc(db, 'users', userId);
+            unsubscribeSettings = onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    settings = doc.data();
+                    applySettings();
+                    setLanguage(settings.language || 'en');
+                }
+            });
+
+            // Domains listener
+            const domainsRef = collection(db, 'users', userId, 'domains');
+            unsubscribeDomains = onSnapshot(domainsRef, (snapshot) => {
+                domains = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderAll();
+            });
+
+            // Providers listener
+            const providersRef = collection(db, 'users', userId, 'providers');
+            unsubscribeProviders = onSnapshot(providersRef, (snapshot) => {
+                providers = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderAll();
+            });
+
+            // Notifications listener
+            const notificationsRef = collection(db, 'users', userId, 'notifications');
+            unsubscribeNotifications = onSnapshot(notificationsRef, (snapshot) => {
+                notifications = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderAll();
+            });
+        };
+
+        // --- DATA OPERATIONS (Firestore) ---
+        const addDomain = async (domainData) => {
+            if (!currentUser) return;
             
-            --shadow-glow: 0 0 30px rgba(255, 80, 17, 0.15);
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            const domainsRef = collection(db, 'users', currentUser.uid, 'domains');
+            const newDomainRef = doc(domainsRef);
             
-            --font-primary: 'Inter', sans-serif;
-            --font-code: 'Fira Code', monospace;
-            --font-tech: 'Orbitron', monospace;
-        }
-
-            * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-
-        body {
-            background-color: #F8F9FA;
-            color: #333;
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--dark);
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            width: 260px;
-            background: var(--dark);
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* BRANDING STYLES ADAPTED FOR LIGHT THEME/DARK SIDEBAR */
-        .sidebar-brand {
-            text-align: center;
-            padding: 25px 20px 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-brand .logo-container {
-            width: 96px;
-            height: 96px;
-            margin: 0 auto 15px;
-            position: relative;
-        }
-
-        .sidebar-brand img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            position: relative;
-            z-index: 10;
-        }
-
-        .sidebar-brand h1 {
-            font-weight: 600;
-            font-size: 1.2rem;
-            color: white;
-            letter-spacing: 0.025em;
-            margin-bottom: 5px;
-            white-space: nowrap;
-        }
-
-        .sidebar-brand p {
-            font-size: 0.875rem;
-            color: rgba(255, 255, 255, 0.5);
-            line-height: 1.4;
-        }
-
-        .sidebar-menu {
-            padding: 10px 0;
-            flex-grow: 1;
-        }
-
-        .menu-item {
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-            cursor: pointer;
-            border-left: 4px solid transparent;
-            position: relative;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .menu-item:hover, .menu-item.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid var(--primary);
-            color: white;
-        }
-
-        .menu-item i {
-            width: 20px;
-            height: 20px;
-            stroke-width: 2;
-            color: var(--primary);
-        }
-        
-        .menu-item.active i, .menu-item:hover i {
-            color: white;
-        }
-        
-        .sidebar-footer {
-            padding: 15px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 13px;
-            font-family: monospace;
-            text-align: center;
-            margin-top: auto;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background-color: var(--danger);
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s;
-        }
-        .notification-badge:empty { display: none; }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Top Header */
-        .top-header {
-            background: white;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            z-index: 100;
-        }
-
-        .menu-toggle {
-            display: none;
-            cursor: pointer;
-            color: var(--dark);
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            background: var(--light);
-            border-radius: 20px;
-            padding: 5px 15px;
-            width: 300px;
-        }
-
-        .search-box input {
-            border: none;
-            background: transparent;
-            padding: 8px;
-            width: 100%;
-            outline: none;
-            color: var(--dark);
-        }
-        .search-box input::placeholder { color: var(--gray); }
-        .search-box i { margin-right: 8px; color: var(--gray); }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-icon {
-            position: relative;
-            cursor: pointer;
-            color: var(--gray);
-            transition: color 0.2s;
-            display: flex;
-            align-items: center;
-        }
-        .header-icon:hover { color: var(--dark); }
-        .header-icon .notification-badge {
-            top: -5px;
-            right: -8px;
-            width: 16px;
-            height: 16px;
-            font-size: 9px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            text-transform: uppercase;
-            background-size: cover;
-            background-position: center;
-        }
-
-        .user-name { color: var(--dark); font-weight: 500; }
-
-        /* Content Area */
-        .content {
-            flex: 1;
-            padding: 25px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        
-        .page { display: none; }
-        .page.active { display: block; }
-
-        .page-title {
-            margin-bottom: 25px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .page-title h2 { font-weight: 600; color: var(--dark); }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--gradient);
-            color: white;
-            text-decoration: none;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(223, 23, 131, 0.25);
-        }
-        
-        .btn-secondary {
-            background: var(--light);
-            color: var(--dark);
-            border: 1px solid #ddd;
-        }
-        .btn-secondary:hover { background: #e9e9ed; }
-        
-        .btn-open-page { background: var(--gradient); color: white; text-decoration: none; }
-        .btn-open-page:hover { opacity: 0.9; }
-        .btn-credentials { background: var(--gray); color: white; border: none; }
-        .btn-credentials:hover { opacity: 0.8; }
-
-        .btn-danger-outline {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-        }
-        .btn-danger-outline:hover { background: var(--danger); color: white; }
-        .btn-icon-only { padding: 10px; }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s;
-            min-width: 0;
-            border: 1px solid #eee;
-        }
-        .stat-card:not(.flip-card):hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(223, 23, 131, 0.1);
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-        .stat-icon i { width: 24px; height: 24px; }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            color: var(--dark);
-        }
-
-        .stat-label { color: var(--gray); font-size: 14px; word-break: break-word; }
-
-        /* Flip Card */
-        .flip-card { perspective: 1000px; cursor: pointer; padding: 0; }
-        .flip-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-        .flip-card.is-flipped .flip-card-inner { transform: rotateY(180deg); }
-        .flip-card-front, .flip-card-back {
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-        }
-        .flip-card-front {
-            position: relative;
-        }
-        .flip-card-back { 
-            position: absolute;
-            top: 0;
-            left: 0;
-            transform: rotateY(180deg); 
-        }
-
-        /* Charts and Tables */
-        .charts-container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card, .table-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-            min-width: 0;
-            border: 1px solid #eee;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-title { font-weight: 600; font-size: 1.1rem; color: var(--dark); }
-
-        /* Tables */
-        .table-responsive { overflow-x: auto; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 600px;
-        }
-
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            color: var(--gray);
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        td { font-size: 15px; color: #444; }
-
-        tr:hover { background: #F8F9FA; }
-
-        .status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-            letter-spacing: 0.5px;
-        }
-
-        .status-active { background: rgba(40, 167, 69, 0.1); color: var(--success); }
-        .status-warning { background: rgba(255, 193, 7, 0.15); color: #d39e00; }
-        .status-expired { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
-
-        .action-btn {
-            padding: 5px;
-            color: var(--gray);
-            cursor: pointer;
-            transition: all 0.3s;
-            margin: 0 4px;
-            display: inline-flex;
-            border-radius: 4px;
-        }
-
-        .action-btn:hover { color: var(--primary); background: #f0f0f0; }
-        .gcal-btn:hover { color: #DB4437; }
-        .ical-btn:hover { color: #34A853; }
-        .dns-btn:hover { color: var(--secondary); }
-
-        /* Filter Tags */
-        .filter-tags {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .filter-tag {
-            background: white;
-            color: var(--gray);
-            border: 1px solid #ddd;
-            padding: 6px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-        .filter-tag:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .filter-tag.active {
-            background: var(--gradient);
-            color: white;
-            border-color: transparent;
-        }
-
-        /* Gallery/Grid Styles for Tools & Recs */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        .recommendation-card {
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 10px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .recommendation-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            border-color: var(--primary);
-        }
-        .card-icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
-            color: var(--primary);
-        }
-        .gallery-title {
-            color: var(--dark);
-            font-weight: 600;
-            margin-bottom: 5px;
-            font-size: 1.1rem;
-        }
-        .gallery-subtitle {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-bottom: 15px;
-            flex-grow: 1;
-        }
-        .gallery-rating {
-            color: var(--warning);
-            margin-bottom: 15px;
-            display: flex;
-            gap: 2px;
-        }
-        .gallery-rating i { width: 16px; height: 16px; fill: var(--warning); }
-        .gallery-action {
-            width: 100%;
-            margin-top: auto;
-        }
-        
-        /* List View Styles for Gallery */
-        .gallery-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .gallery-list .recommendation-card {
-            flex-direction: row;
-            text-align: left;
-            align-items: center;
-            gap: 20px;
-        }
-        .gallery-list .card-icon { margin-bottom: 0; font-size: 2.5rem; }
-        .gallery-list .gallery-subtitle { margin-bottom: 0; }
-        .gallery-list .gallery-rating { margin-bottom: 0; margin-right: 20px; }
-        .gallery-list .gallery-action { width: auto; margin-top: 0; margin-left: auto; }
-        
-        .view-toggle-btn { color: var(--gray); background: transparent; border: none; padding: 5px; border-radius: 4px; cursor: pointer; transition: 0.2s;}
-        .view-toggle-btn.active { color: var(--primary); background: var(--light); }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(3px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 650px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            animation: modal-fade-in 0.3s ease;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        @keyframes modal-fade-in {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .modal-header {
-            padding: 15px 20px;
-            background: var(--gradient);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h3 { font-size: 1.2rem; color: white; margin: 0; }
-        .modal-header .modal-close i { stroke-width: 3; color: white; }
-        .modal-header .modal-close:hover i { color: #f0f0f0; }
-
-        .modal-close { cursor: pointer; transition: 0.2s; }
-
-        .modal-body {
-            padding: 25px;
-            overflow-y: auto;
-        }
-
-        .form-group { margin-bottom: 20px; }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--dark);
-            font-size: 0.95rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            background: white;
-            border: 1px solid #ddd;
-            color: var(--dark);
-            border-radius: 6px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-        .form-control:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(223, 23, 131, 0.1);
-        }
-
-        .password-wrapper { position: relative; }
-        .password-wrapper .form-control { padding-right: 40px; }
-        .password-wrapper .toggle-password {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: var(--gray);
-        }
-        .password-wrapper .toggle-password:hover { color: var(--dark); }
-
-        .input-group { 
-            display: flex; 
-            gap: 10px; 
-            width: 100%;
-        }
-        .input-group .form-control {
-            flex: 1;
-            min-width: 0;
-        }
-        .input-group .btn {
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .form-check { display: flex; align-items: center; gap: 10px; }
-        .form-check-input {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-            position: relative;
-        }
-        .form-check-input:checked {
-            background: var(--gradient);
-            border-color: transparent;
-        }
-        .form-check-input:checked::after {
-            content: "✓";
-            position: absolute;
-            color: white;
-            font-size: 12px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        /* Mobile Nav */
-        .mobile-nav {
-            position: fixed;
-            top: 0;
-            left: -100%;
-            width: 80%;
-            max-width: 300px;
-            height: 100%;
-            background: var(--dark);
-            color: white;
-            z-index: 1500;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.2);
-        }
-
-        .mobile-nav.open { left: 0; }
-        
-        .nav-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(2px);
-            z-index: 1400;
-        }
-        .nav-overlay.open { display: block; }
-
-        .mobile-nav-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .mobile-nav-header h3 { color: white; margin: 0; font-weight: 600; }
-        .mobile-nav-close { color: white; cursor: pointer; }
-
-        /* Footer Styles */
-        .main-footer {
-            padding: 20px;
-            text-align: center;
-            color: var(--gray);
-            font-size: 14px;
-            border-top: 1px solid #eee;
-            margin-top: auto;
-        }
-
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--dark);
-            color: white;
-            padding: 15px 25px;
-            border-left: 4px solid var(--primary);
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 3000;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.4s ease;
-            font-weight: 500;
-        }
-        .toast.show { opacity: 1; transform: translateY(0); }
-        
-        /* Persistent Notifications */
-        #persistent-notifications-container {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            z-index: 2500;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .persistent-notification {
-            background-color: white;
-            border-left: 5px solid var(--warning);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            width: 320px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: modal-fade-in 0.3s;
-        }
-        .persistent-notification.expired { border-left-color: var(--danger); }
-        .persistent-notification p { margin: 0; font-size: 15px; color: #444; }
-        .persistent-notification p strong { color: var(--dark); }
-        .notification-dismiss-btn {
-            background-color: var(--danger);
-            color: white;
-            border: none;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        .notification-dismiss-btn:hover { opacity: 0.8; }
-
-        /* Notifications Page Styles */
-        #notificationsList .notification-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        #notificationsList .notification-item:last-child { border-bottom: none; }
-        #notificationsList .notification-item p { margin: 0; }
-        #notificationsList .notification-item p strong { font-weight: 600; color: var(--dark); }
-        #notificationsList .notification-item.expired p { color: var(--danger); }
-        #notificationsList .placeholder { text-align: center; padding: 30px; color: var(--gray); }
-
-        /* Providers Page Styles */
-        .providers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        .provider-card {
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s;
-        }
-        .provider-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        .provider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .provider-info { display: flex; align-items: center; gap: 15px; }
-        .provider-header .actions { display: flex; gap: 5px; }
-        .provider-name { font-weight: 600; font-size: 1.1rem; color: var(--dark); }
-        .provider-logo {
-            width: 40px; height: 40px; border-radius: 8px;
-            background-color: var(--light); object-fit: contain; padding: 2px;
-        }
-        .provider-stats { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
-        .provider-stats p { font-size: 0.95rem; color: var(--dark); }
-        .provider-stats span {
-            font-weight: 600;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .provider-actions { margin-top: auto; display: flex; gap: 10px; }
-        .provider-actions .btn { flex-grow: 1; padding: 8px 15px; }
-
-        .provider-banner-link {
-            display: block;
-            margin-top: 30px;
-            width: 100%;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #ddd;
-            transition: all 0.3s;
-        }
-        
-        .provider-banner-link:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            border-color: var(--primary);
-        }
-        
-        .provider-banner-img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        /* Settings Page Styles */
-        .settings-grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
-        @media (min-width: 992px) { .settings-grid { grid-template-columns: 1fr 1fr; } }
-        .color-palette { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
-        .color-swatch {
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-            border: 3px solid transparent; transition: border-color 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .color-swatch.active { border-color: var(--primary); }
-        .profile-picture-controls { display: flex; align-items: center; gap: 20px; }
-        .profile-picture-controls .btn { margin-bottom: 10px; display: block; width: 150px; }
-
-        /* Calendar Page Styles */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .calendar-header h3 { font-weight: 600; color: var(--dark); min-width: 180px; text-align: center; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .calendar-day-name { font-weight: 600; text-align: center; color: var(--gray); font-size: 0.9em; padding-bottom: 10px; }
-        .calendar-day {
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            min-height: 120px;
-            border: 1px solid #eee;
-        }
-        .calendar-day.other-month { background: #f8f9fa; border-style: dashed; }
-        .calendar-day .day-number { font-weight: 600; margin-bottom: 5px; color: var(--dark); }
-        .calendar-event {
-            background: var(--gradient);
-            color: white;
-            border-radius: 4px;
-            padding: 3px 6px;
-            font-size: 0.8em;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        /* DNS Records Loading */
-        .dns-loading { text-align: center; padding: 20px; color: var(--gray); }
-        .dns-badge {
-            background: var(--light);
-            border: 1px solid #eee;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 12px;
-            color: var(--dark);
-            display: inline-block;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        /* Rec Section Divider */
-        .section-divider {
-            margin: 30px 0 15px;
-            padding-top: 20px;
-            border-top: 1px dashed #ddd;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 992px) {
-            .sidebar { display: none; }
-            .menu-toggle { display: block; }
-            .charts-container { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 576px) {
-            .search-box { display: none; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .user-profile .user-name { display: none; }
-            .page-title { flex-direction: column; align-items: flex-start; }
-            .gallery-grid { grid-template-columns: 1fr; }
+            await setDoc(newDomainRef, {
+                ...domainData,
+                id: newDomainRef.id,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
             
-            .gallery-list .recommendation-card { flex-direction: column; text-align: center; gap: 15px; }
-            .gallery-list .gallery-rating { margin-right: 0; }
-            .gallery-list .gallery-action { margin-left: 0; width: 100%; }
+            showToast('Domain added successfully!');
+        };
 
-            .input-group.responsive-group { flex-direction: column; }
-            .input-group.responsive-group .btn { width: 100%; }
+        const updateDomain = async (domainId, domainData) => {
+            if (!currentUser) return;
+            
+            const domainRef = doc(db, 'users', currentUser.uid, 'domains', domainId);
+            
+            await setDoc(domainRef, {
+                ...domainData,
+                id: domainId,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            
+            showToast('Domain updated successfully!');
+        };
+
+        const deleteDomain = async (domainId) => {
+            if (!currentUser) return;
+            
+            const domainRef = doc(db, 'users', currentUser.uid, 'domains', domainId);
+            await deleteDoc(domainRef);
+            
+            showToast('Domain deleted.');
+        };
+
+        const addProvider = async (providerData) => {
+            if (!currentUser) return;
+            
+            const providersRef = collection(db, 'users', currentUser.uid, 'providers');
+            const newProviderRef = doc(providersRef);
+            
+            await setDoc(newProviderRef, {
+                ...providerData,
+                id: newProviderRef.id,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            
+            showToast('Provider added successfully!');
+        };
+
+        const updateProvider = async (providerId, providerData) => {
+            if (!currentUser) return;
+            
+            const providerRef = doc(db, 'users', currentUser.uid, 'providers', providerId);
+            
+            await setDoc(providerRef, {
+                ...providerData,
+                id: providerId,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            
+            showToast('Provider updated successfully!');
+        };
+
+        const deleteProvider = async (providerId) => {
+            if (!currentUser) return;
+            
+            const providerRef = doc(db, 'users', currentUser.uid, 'providers', providerId);
+            await deleteDoc(providerRef);
+            
+            showToast('Provider deleted.');
+        };
+
+        const addNotification = async (notificationData) => {
+            if (!currentUser) return;
+            
+            const notificationsRef = collection(db, 'users', currentUser.uid, 'notifications');
+            const newNotificationRef = doc(notificationsRef);
+            
+            await setDoc(newNotificationRef, {
+                ...notificationData,
+                id: newNotificationRef.id,
+                createdAt: serverTimestamp()
+            });
+        };
+
+        const deleteNotification = async (notificationId) => {
+            if (!currentUser) return;
+            
+            const notificationRef = doc(db, 'users', currentUser.uid, 'notifications', notificationId);
+            await deleteDoc(notificationRef);
+            
+            showToast('Notification cleared.');
+        };
+
+        const updateSettings = async (newSettings) => {
+            if (!currentUser) return;
+            
+            const userRef = doc(db, 'users', currentUser.uid);
+            await setDoc(userRef, {
+                ...newSettings,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        };
+
+        // --- UI STATE MANAGEMENT BASED ON AUTH ---
+        const showAuthenticatedUI = () => {
+            document.body.classList.remove('auth-required');
+            document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.non-auth-only').forEach(el => el.style.display = 'none');
+            if (logoutBtn) logoutBtn.style.display = 'block';
+        };
+
+        const showUnauthenticatedUI = () => {
+            document.body.classList.add('auth-required');
+            document.querySelectorAll('.auth-only').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.non-auth-only').forEach(el => el.style.display = 'block');
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            
+            // Clear local data
+            domains = [];
+            providers = [];
+            notifications = [];
+            settings = {};
+            
+            // Show auth modal
+            showAuthModal();
+        };
+
+        // --- AUTH STATE OBSERVER ---
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            
+            if (user) {
+                showAuthenticatedUI();
+                setupFirestoreListeners(user.uid);
+            } else {
+                showUnauthenticatedUI();
+                // Unsubscribe from all listeners
+                if (unsubscribeDomains) unsubscribeDomains();
+                if (unsubscribeProviders) unsubscribeProviders();
+                if (unsubscribeSettings) unsubscribeSettings();
+                if (unsubscribeNotifications) unsubscribeNotifications();
+            }
+        });
+
+        // --- RENDERING & UI UPDATES (modified to use Firestore data) ---
+        const renderDomains = (filteredDomains = domains) => {
+            const lang = settings.language;
+            domainsTableBody.innerHTML = '';
+            if (filteredDomains.length === 0) {
+                domainsTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">${translations[lang].noDomainsFound}</td></tr>`;
+                return;
+            }
+            filteredDomains.forEach(domain => {
+                const renewal = new Date(domain.renewalDate);
+                const now = new Date();
+                const diffTime = renewal - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let statusClass, statusText;
+                if (diffDays <= 0) {
+                    statusClass = 'status-expired';
+                    statusText = translations[lang].statusExpired;
+                } else if (diffDays <= 30) {
+                    statusClass = 'status-warning';
+                    statusText = translations[lang].statusExpiringIn.replace('{days}', diffDays);
+                } else {
+                    statusClass = 'status-active';
+                    statusText = translations[lang].statusActive;
+                }
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${domain.name}</strong></td>
+                    <td>${domain.provider}</td>
+                    <td>${domain.renewalDate}</td>
+                    <td>$${domain.renewalPrice.toFixed(2)}</td>
+                    <td><span class="status ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <span class="action-btn dns-btn" data-id="${domain.id}" title="Check DNS"><i data-lucide="network"></i></span>
+                        <span class="action-btn gcal-btn" data-id="${domain.id}" title="Add to Google Calendar"><i data-lucide="calendar-plus"></i></span>
+                        <span class="action-btn ical-btn" data-id="${domain.id}" title="Download iCal Event"><i data-lucide="download"></i></span>
+                        <span class="action-btn" data-id="${domain.id}" title="Edit"><i data-lucide="pencil"></i></span>
+                        <span class="action-btn" data-id="${domain.id}" title="Delete"><i data-lucide="trash-2"></i></span>
+                    </td>`;
+                domainsTableBody.appendChild(tr);
+            });
+        };
+
+        const renderTopRenewals = () => {
+            const lang = settings.language;
+            urgentRenewalsBody.innerHTML = '';
+            const sortedDomains = [...domains].sort((a, b) => new Date(a.renewalDate) - new Date(b.renewalDate));
+            const top5 = sortedDomains.slice(0, 5);
+            
+            if (top5.length === 0) {
+                urgentRenewalsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">${translations[lang].noDomainsFound}</td></tr>`;
+                return;
+            }
+
+            top5.forEach(domain => {
+                const diffDays = Math.ceil((new Date(domain.renewalDate) - new Date()) / (1000 * 60 * 60 * 24));
+                const daysText = diffDays < 0 ? 'Expired' : `${diffDays} days`;
+                const daysClass = diffDays < 0 ? 'color: var(--danger); font-weight: bold;' : (diffDays <= 30 ? 'color: var(--warning); font-weight: bold;' : '');
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${domain.name}</strong></td>
+                    <td>${domain.renewalDate}</td>
+                    <td style="${daysClass}">${daysText}</td>
+                    <td>$${domain.renewalPrice.toFixed(2)}</td>
+                `;
+                urgentRenewalsBody.appendChild(tr);
+            });
+        };
+
+        const renderProviders = () => {
+            const lang = settings.language;
+            providersGrid.innerHTML = '';
+            providers.forEach(p => {
+                const domainCount = domains.filter(d => d.provider === p.name).length;
+                const autoRenewCount = domains.filter(d => d.provider === p.name && d.autoRenew).length;
+                const card = document.createElement('div');
+                card.className = 'provider-card';
+                card.innerHTML = `
+                    <div class="provider-header">
+                        <div class="provider-info">
+                            <img 
+                                src="https://www.google.com/s2/favicons?sz=64&domain_url=${p.url}" 
+                                alt="${p.name}" 
+                                class="provider-logo"
+                                onerror="this.onerror=null;this.src='https://placehold.co/64x64/333/999?text=${p.name.substring(0,2)}';"
+                            >
+                            <h3 class="provider-name">${p.name}</h3>
+                        </div>
+                        <div class="actions">
+                            <span class="action-btn" data-id="${p.id}" title="Edit Provider"><i data-lucide="pencil"></i></span>
+                            <span class="action-btn" data-id="${p.id}" title="Delete Provider"><i data-lucide="trash-2"></i></span>
+                        </div>
+                    </div>
+                    <div class="provider-stats">
+                        <p>${translations[lang].domainsRegistered}: <span>${domainCount}</span></p>
+                        <p>${translations[lang].autoRenewal}: <span>${autoRenewCount}/${domainCount}</span></p>
+                    </div>
+                    <div class="provider-actions">
+                         <a href="${p.url}" target="_blank" class="btn btn-open-page"><i data-lucide="external-link"></i> ${translations[lang].openPage}</a>
+                         <button class="btn btn-credentials credentials-btn" data-id="${p.id}"><i data-lucide="key-round"></i> ${translations[lang].viewCredentials}</button>
+                    </div>
+                `;
+                providersGrid.appendChild(card);
+            });
+        };
+
+        const applySettings = () => {
+            if (!settings) return;
+            
+            if (settings.theme === 'custom' && settings.customColor) {
+                document.documentElement.style.setProperty('--primary', settings.customColor);
+            } else {
+                const theme = colorThemes[settings.theme] || colorThemes.orange;
+                document.documentElement.style.setProperty('--primary', theme.primary);
+            }
+
+            // Toggle Logo Based on Theme
+            const defaultLogo = document.getElementById('defaultBrandLogo');
+            const themeLogoWrapper = document.getElementById('themeBrandLogoWrapper');
+            
+            if (defaultLogo && themeLogoWrapper) {
+                if (settings.theme === 'orange') {
+                    defaultLogo.style.display = 'block';
+                    themeLogoWrapper.style.display = 'none';
+                } else {
+                    defaultLogo.style.display = 'none';
+                    themeLogoWrapper.style.display = 'flex';
+                }
+            }
+
+            userNameEl.textContent = settings.username || 'User';
+            const initials = (settings.username || 'User').split(' ').map(n => n[0]).join('').substring(0,2);
+            
+            [userAvatarEl, settingsAvatarPreview].forEach(avatar => {
+                if (avatar) {
+                    if (settings.profilePicture) {
+                        avatar.style.backgroundImage = `url(${settings.profilePicture})`;
+                        avatar.textContent = '';
+                    } else {
+                        avatar.style.backgroundImage = '';
+                        avatar.textContent = initials;
+                    }
+                }
+            });
+
+            const settingUsername = document.getElementById('settingUsername');
+            if (settingUsername) {
+                settingUsername.value = settings.username || '';
+            }
+            
+            if (colorPalette) {
+                colorPalette.innerHTML = '';
+                Object.keys(colorThemes).forEach(key => {
+                    const swatch = document.createElement('div');
+                    swatch.className = 'color-swatch';
+                    swatch.style.backgroundColor = colorThemes[key].primary;
+                    swatch.dataset.theme = key;
+                    if (key === settings.theme && settings.theme !== 'custom') {
+                        swatch.classList.add('active');
+                    }
+                    swatch.addEventListener('click', () => {
+                        updateSettings({
+                            ...settings,
+                            theme: key,
+                            customColor: null
+                        });
+                    });
+                    colorPalette.appendChild(swatch);
+                });
+            }
+            
+            if (settings.customColor && customColorPicker) {
+                customColorPicker.value = settings.customColor;
+            }
+        };
+
+        const openModal = (modal, titleKey, btnTextKey, data = {}) => {
+            const lang = settings.language;
+            if (modal === domainModal) {
+                modal.querySelector('#modalTitle').textContent = translations[lang][titleKey];
+                modal.querySelector('#formSubmitBtn').textContent = translations[lang][btnTextKey];
+                document.getElementById('domainId').value = data.id || '';
+                document.getElementById('domainName').value = data.name || '';
+                document.getElementById('purchaseDate').value = data.purchaseDate || '';
+                document.getElementById('renewalDate').value = data.renewalDate || '';
+                document.getElementById('purchasePrice').value = data.purchasePrice || '';
+                document.getElementById('renewalPrice').value = data.renewalPrice || '';
+                document.getElementById('domainAutoRenew').checked = data.autoRenew || false;
+                if (whoisStatus) whoisStatus.style.display = 'none';
+                
+                const providerSelect = document.getElementById('domainProvider');
+                providerSelect.innerHTML = `<option value="">${translations[lang].selectProvider || 'Select Provider'}</option>`;
+                providers.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.name;
+                    option.textContent = p.name;
+                    providerSelect.appendChild(option);
+                });
+                providerSelect.appendChild(new Option(`${translations[lang].other || 'Other'}...`, 'other'));
+                providerSelect.value = data.provider || '';
+            } else if (modal === providerModal) {
+                modal.querySelector('#providerModalTitle').textContent = translations[lang][titleKey];
+                modal.querySelector('#providerFormSubmitBtn').textContent = translations[lang][btnTextKey];
+                document.getElementById('providerId').value = data.id || '';
+                document.getElementById('providerName').value = data.name || '';
+                document.getElementById('providerUrl').value = data.url || '';
+                document.getElementById('providerUser').value = data.user || '';
+                document.getElementById('providerPass').value = data.pass || '';
+                document.getElementById('providerUid').value = data.uid || '';
+            } else if (modal === credentialsModal) {
+                modal.querySelector('#credentialsModalTitle').textContent = `${data.name} ${translations[lang].providerCredentials}`;
+                document.getElementById('credUser').textContent = data.user || 'Not set';
+                document.getElementById('credPass').textContent = data.pass ? '••••••••' : 'Not set';
+                document.getElementById('credUid').textContent = data.uid || 'Not set';
+            }
+            modal.style.display = 'flex';
+            lucide.createIcons();
+        };
+
+        const closeModal = (modal) => {
+            modal.style.display = 'none';
+            if (modal.querySelector('form')) {
+                modal.querySelector('form').reset();
+            }
+        };
+
+        // --- NOTIFICATIONS ---
+        const renderNotificationsPage = () => {
+            const lang = settings.language;
+            notificationsList.innerHTML = '';
+            if(notifications.length === 0) {
+                notificationsList.innerHTML = `<p class="placeholder">${translations[lang].noNotifications}</p>`;
+                return;
+            }
+            notifications.forEach(n => {
+                const item = document.createElement('div');
+                item.className = `notification-item ${n.type}`;
+                item.innerHTML = `
+                    <p>${n.message}</p>
+                    <span class="action-btn" data-id="${n.id}" title="Delete Notification"><i data-lucide="trash-2"></i></span>
+                `;
+                notificationsList.appendChild(item);
+            });
         }
-        @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1280px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        
+        const renderPopUpNotifications = (notificationsToPop) => {
+            notificationsContainer.innerHTML = ''; 
+            notificationsToPop.forEach(n => {
+                const notification = document.createElement('div');
+                notification.className = `persistent-notification ${n.type}`;
+                notification.innerHTML = `<p>${n.message}</p><button class="notification-dismiss-btn">&times;</button>`;
+                notification.querySelector('.notification-dismiss-btn').addEventListener('click', () => {
+                    notification.remove();
+                });
+                notificationsContainer.appendChild(notification);
+            });
+        }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .lucide-spin { animation: spin 2s linear infinite; }
+        const updateNotificationBadge = () => {
+            const count = notifications.length;
+            const countText = count > 0 ? count : '';
+            document.querySelectorAll('.notification-badge').forEach(badge => {
+                badge.textContent = countText;
+            });
+        }
+        
+        const updateNotifications = () => {
+            const now = new Date();
+            const lang = settings.language;
+            const expiringDomains = domains.filter(d => {
+                const diffDays = Math.ceil((new Date(d.renewalDate) - now) / (1000 * 60 * 60 * 24));
+                return diffDays <= 30;
+            });
+            const expiringDomainIds = expiringDomains.map(d => d.id);
+            
+            // Filter notifications that are still relevant
+            notifications = notifications.filter(n => expiringDomainIds.includes(n.domainId));
+            
+            const notifiedDomainIds = notifications.map(n => n.domainId);
+            
+            expiringDomains.forEach(domain => {
+                if (!notifiedDomainIds.includes(domain.id)) {
+                    const renewal = new Date(domain.renewalDate);
+                    const diffDays = Math.ceil((renewal - now) / (1000 * 60 * 60 * 24));
+                    let message, type;
+                    if (diffDays <= 0) {
+                        message = `<strong>${domain.name}</strong> ${translations[lang].statusExpired}!`;
+                        type = 'expired';
+                    } else {
+                        message = `<strong>${domain.name}</strong> ${translations[lang].statusExpiringIn.replace('{days}', diffDays)}`;
+                        type = 'expiring';
+                    }
+                    
+                    // Add to Firestore
+                    addNotification({
+                        domainId: domain.id,
+                        message: message,
+                        type: type
+                    });
+                }
+            });
+        };
 
+        // --- CALENDAR LOGIC (unchanged) ---
+        const renderCalendar = () => {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const lang = settings.language;
 
+            currentMonthYearEl.textContent = new Date(year, month).toLocaleDateString(lang, { month: 'long', year: 'numeric' });
+            calendarGrid.innerHTML = '';
+            calendarDayNamesEl.innerHTML = '';
 
+            translations[lang].dayNames.forEach(day => {
+                calendarDayNamesEl.innerHTML += `<div class="calendar-day-name">${day}</div>`;
+            });
 
-/* Auth Container - Adapted for dark theme */
-#authContainer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-}
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-.auth-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 2rem;
-    width: 320px;
-    text-align: center;
-    box-shadow: var(--shadow-glow);
-    animation: modal-fade-in 0.3s ease;
-}
+            for(let i = 0; i < firstDayOfMonth; i++) {
+                calendarGrid.innerHTML += `<div class="calendar-day other-month"></div>`;
+            }
 
-.auth-box h2 {
-    color: var(--text-main);
-    font-family: var(--font-tech);
-    font-weight: 400;
-    margin-bottom: 1.5rem;
-    letter-spacing: 0.025em;
-}
+            for(let day = 1; day <= daysInMonth; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.innerHTML = `<div class="day-number">${day}</div>`;
+                
+                const renewals = domains.filter(d => {
+                    const renewalDate = new Date(d.renewalDate);
+                    return renewalDate.getFullYear() === year && renewalDate.getMonth() === month && renewalDate.getDate() === day;
+                });
 
-.auth-box input {
-    width: 100%;
-    padding: 12px 15px;
-    margin: 8px 0;
-    background: var(--bg-darker);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text-main);
-    font-size: 16px;
-    transition: var(--transition);
-}
+                renewals.forEach(domain => {
+                    dayEl.innerHTML += `<div class="calendar-event"><i data-lucide="globe" style="width: 12px; height: 12px;"></i>${domain.name}</div>`;
+                });
 
-.auth-box input:focus {
-    border-color: var(--primary);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 80, 17, 0.15);
-}
+                calendarGrid.appendChild(dayEl);
+            }
+            lucide.createIcons();
+        };
+        
+        // --- API INTEGRATIONS (WHOIS & DNS) - unchanged ---
+        if (fetchWhoisBtn) {
+            fetchWhoisBtn.addEventListener('click', async () => {
+                const domain = document.getElementById('domainName').value.trim();
+                const lang = settings.language;
+                if (!domain) {
+                    showToast('Please enter a domain name first.', 'warning');
+                    return;
+                }
+                
+                whoisStatus.style.display = 'block';
+                whoisStatus.style.color = 'var(--text-muted)';
+                whoisStatus.textContent = translations[lang].fetching;
+                
+                try {
+                    const response = await fetch(`https://networkcalc.com/api/dns/whois/${domain}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'OK' && Object.keys(data.whois).length > 0) {
+                        const whois = data.whois;
+                        
+                        if (whois.creation_date) {
+                            document.getElementById('purchaseDate').value = new Date(whois.creation_date).toISOString().substring(0, 10);
+                        }
+                        
+                        if (whois.expiry_date) {
+                            document.getElementById('renewalDate').value = new Date(whois.expiry_date).toISOString().substring(0, 10);
+                        }
+                        
+                        if (whois.registrar) {
+                            const registrarName = whois.registrar.toLowerCase();
+                            const providerSelect = document.getElementById('domainProvider');
+                            
+                            let matchFound = false;
+                            for (let i = 0; i < providerSelect.options.length; i++) {
+                                if (providerSelect.options[i].value && registrarName.includes(providerSelect.options[i].value.toLowerCase())) {
+                                    providerSelect.value = providerSelect.options[i].value;
+                                    matchFound = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!matchFound) {
+                                providerSelect.value = 'other';
+                                document.getElementById('otherProviderGroup').style.display = 'block';
+                                document.getElementById('otherProvider').value = whois.registrar;
+                            } else {
+                                document.getElementById('otherProviderGroup').style.display = 'none';
+                            }
+                        }
+                        
+                        whoisStatus.style.color = 'var(--success)';
+                        whoisStatus.textContent = translations[lang].whoisSuccess;
+                    } else {
+                        whoisStatus.style.color = 'var(--danger)';
+                        whoisStatus.textContent = translations[lang].whoisError;
+                    }
+                } catch (err) {
+                    whoisStatus.style.color = 'var(--danger)';
+                    whoisStatus.textContent = translations[lang].whoisError;
+                }
+            });
+        }
 
-.auth-box input::placeholder {
-    color: var(--text-muted);
-}
+        const fetchDnsRecords = async (domainName) => {
+            dnsDomainLabel.textContent = domainName;
+            dnsModal.style.display = 'flex';
+            dnsTableWrapper.style.display = 'none';
+            dnsError.style.display = 'none';
+            dnsLoading.style.display = 'block';
+            
+            try {
+                const types = ['A', 'AAAA', 'MX', 'TXT', 'CNAME', 'NS'];
+                const fetchPromises = types.map(type => 
+                    fetch(`https://dns.google/resolve?name=${domainName}&type=${type}`)
+                        .then(response => response.json())
+                );
+                
+                const results = await Promise.all(fetchPromises);
+                dnsLoading.style.display = 'none';
+                
+                let allAnswers = [];
+                results.forEach(data => {
+                    if (data.Answer && data.Answer.length > 0) {
+                        allAnswers = allAnswers.concat(data.Answer);
+                    }
+                });
+                
+                if (allAnswers.length > 0) {
+                    dnsTableBody.innerHTML = '';
+                    const typeMap = { 1: 'A', 2: 'NS', 5: 'CNAME', 15: 'MX', 16: 'TXT', 28: 'AAAA' };
+                    
+                    allAnswers.sort((a, b) => a.type - b.type);
 
-.auth-box button {
-    margin: 10px 5px 5px;
-    padding: 12px 24px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: var(--transition);
-    font-family: var(--font-primary);
-}
+                    allAnswers.forEach(record => {
+                        const typeStr = typeMap[record.type] || `Type ${record.type}`;
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><span class="dns-badge">${typeStr}</span></td>
+                            <td style="word-break: break-all;">${record.data}</td>
+                        `;
+                        dnsTableBody.appendChild(tr);
+                    });
+                    
+                    dnsTableWrapper.style.display = 'block';
+                } else {
+                    dnsError.style.display = 'block';
+                    dnsError.textContent = translations[settings.language].noDnsFound;
+                }
+            } catch (err) {
+                dnsLoading.style.display = 'none';
+                dnsError.style.display = 'block';
+                dnsError.textContent = "Error connecting to DNS API.";
+            }
+        };
 
-.auth-box button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow);
-}
+        // --- NAVIGATION (unchanged) ---
+        const setActivePage = (pageId) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            document.querySelectorAll('.menu-item').forEach(m => {
+                m.classList.toggle('active', m.dataset.page === pageId);
+            });
+            if(pageId === 'calendar') renderCalendar();
+            lucide.createIcons();
+        };
 
-/* Error message styling for auth */
-.auth-error {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid var(--danger);
-    color: var(--danger);
-    padding: 10px;
-    border-radius: 6px;
-    margin: 10px 0;
-    font-size: 0.9rem;
-}
+        // --- CHARTS & STATS (mostly unchanged) ---
+        let expensesChart, providersChart;
+        const updateDashboard = () => {
+            const totalDomains = domains.length;
+            const uniqueProviders = [...new Set(domains.map(d => d.provider))].length;
+            const yearlyExpenses = domains.reduce((sum, d) => sum + d.renewalPrice, 0);
+            const totalInvestment = domains.reduce((sum, d) => sum + (d.purchasePrice || 0), 0);
+            const expiringSoon = domains.filter(d => {
+                const diffDays = Math.ceil((new Date(d.renewalDate) - new Date()) / (1000 * 60 * 60 * 24));
+                return diffDays > 0 && diffDays <= 30;
+            }).length;
 
-/* Success message styling for auth */
-.auth-success {
-    background: rgba(81, 207, 102, 0.15);
-    border: 1px solid var(--success);
-    color: var(--success);
-    padding: 10px;
-    border-radius: 6px;
-    margin: 10px 0;
-    font-size: 0.9rem;
-}
+            document.getElementById('stat-total-domains').textContent = totalDomains;
+            document.getElementById('stat-domain-providers').textContent = uniqueProviders;
+            document.getElementById('stat-yearly-expenses').textContent = `$${yearlyExpenses.toFixed(2)}`;
+            document.getElementById('stat-total-investment').textContent = `$${totalInvestment.toFixed(2)}`;
+            document.getElementById('stat-expiring-soon').textContent = expiringSoon;
 
-/* Logout button - Adapted for dark theme */
-#logoutBtn {
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 15px;
-    font-weight: 500;
-    transition: var(--transition);
-    font-family: var(--font-primary);
-    width: 100%;
-}
+            const monthlyExpenses = Array(12).fill(0);
+            domains.forEach(d => {
+                const month = new Date(d.renewalDate).getMonth();
+                monthlyExpenses[month] += d.renewalPrice;
+            });
 
-#logoutBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-}
+            const providerCounts = domains.reduce((acc, d) => { acc[d.provider] = (acc[d.provider] || 0) + 1; return acc; }, {});
+            const sortedProviders = Object.entries(providerCounts).sort(([,a],[,b]) => b-a);
+            let providerLabels = [], providerData = [];
+            const othersLabel = translations[settings.language]?.others || 'Others';
 
-/* Auth toggle link styling */
-.auth-toggle {
-    margin-top: 15px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
+            // Show top 3 providers, group the rest into "Others"
+            if (sortedProviders.length > 3) {
+                const topProviders = sortedProviders.slice(0, 3);
+                topProviders.forEach(([name, count]) => { providerLabels.push(name); providerData.push(count); });
+                const othersCount = sortedProviders.slice(3).reduce((sum, [, count]) => sum + count, 0);
+                if(othersCount > 0) {
+                    providerLabels.push(othersLabel); 
+                    providerData.push(othersCount);
+                }
+            } else {
+                sortedProviders.forEach(([name, count]) => { providerLabels.push(name); providerData.push(count); });
+            }
+            const providerColors = Object.values(colorThemes).map(t => t.primary).concat(['#ffd43b', '#51cf66', '#3FC9B0', '#a0a0a0']);
+            
+            let primaryColor = document.documentElement.style.getPropertyValue('--primary').trim() || '#ff5011';
+            if (expensesChart) expensesChart.destroy();
+            expensesChart = new Chart(document.getElementById('expensesChart').getContext('2d'), { 
+                type: 'line', 
+                data: { 
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 
+                    datasets: [{ 
+                        label: 'Monthly Renewal Costs', 
+                        data: monthlyExpenses, 
+                        backgroundColor: 'rgba(255, 80, 17, 0.1)', 
+                        borderColor: primaryColor, 
+                        borderWidth: 2, 
+                        tension: 0.3, 
+                        fill: true 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    } 
+                } 
+            });
+            
+            if (providersChart) providersChart.destroy();
+            providersChart = new Chart(document.getElementById('providersChart').getContext('2d'), { 
+                type: 'doughnut', 
+                data: { 
+                    labels: providerLabels, 
+                    datasets: [{ 
+                        data: providerData, 
+                        backgroundColor: providerColors, 
+                        borderWidth: 1,
+                        borderColor: 'var(--bg-card)'
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { position: 'bottom', labels: { color: '#ffffff' } } } 
+                } 
+            });
+            
+            renderTopRenewals();
+        };
+        
+        const generateGoogleCalendarLink = (domain) => {
+            const text = encodeURIComponent(`Renew domain: ${domain.name}`);
+            const date = new Date(domain.renewalDate).toISOString().slice(0, 10).replace(/-/g, '');
+            const details = encodeURIComponent(`Reminder to renew ${domain.name} with ${domain.provider}. Annual cost: $${domain.renewalPrice}.`);
+            return `https://www.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${date}/${date}&details=${details}`;
+        };
+        
+        const generateICal = (domainsToExport, singleFile = false) => {
+            let icalContent = `BEGIN:VCALENDAR\nVERSION:2.0\n`;
+            domainsToExport.forEach(domain => {
+                const date = new Date(domain.renewalDate).toISOString().slice(0, 10).replace(/-/g, '');
+                icalContent += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${date}\nDTEND;VALUE=DATE:${date}\nSUMMARY:Renew domain: ${domain.name}\nDESCRIPTION:Reminder to renew ${domain.name} with ${domain.provider}. Annual cost: $${domain.renewalPrice}.\nEND:VEVENT\n`;
+            });
+            icalContent += `END:VCALENDAR`;
+            
+            const blob = new Blob([icalContent], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = singleFile ? 'all_renewals.ics' : `renew_${domainsToExport[0].name}.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
 
-.auth-toggle a {
-    color: var(--primary);
-    text-decoration: none;
-    cursor: pointer;
-    transition: var(--transition);
-}
+        const renderAll = () => {
+            renderDomains();
+            renderProviders();
+            renderCalendar();
+            updateDashboard();
+            updateNotifications();
+            
+            // Re-render Galleries with translations
+            renderToolsPage();
+            renderGallery('modalDomainRecsGrid', recommendedProvidersData, 'getDeal');
+            renderGallery('modalProviderRecsGrid', recommendedProvidersData, 'getDeal');
+            lucide.createIcons();
+        };
 
-.auth-toggle a:hover {
-    text-decoration: underline;
-    filter: brightness(1.2);
-}
+        // --- REUSABLE GALLERY RENDERER (unchanged) ---
+        const renderGallery = (containerId, data, btnTranslateKey) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            const lang = settings.language;
+            
+            data.forEach(item => {
+                let starsHtml = '';
+                for(let i=0; i<Math.floor(item.rating); i++) starsHtml += '<i data-lucide="star" style="fill: var(--primary); color: var(--primary);"></i>';
+                if(item.rating % 1 !== 0) starsHtml += '<i data-lucide="star-half" style="fill: var(--primary); color: var(--primary);"></i>';
 
-/* Password field wrapper for auth */
-.auth-box .password-wrapper {
-    position: relative;
-    width: 100%;
-}
+                container.innerHTML += `
+                    <div class="recommendation-card">
+                        <i data-lucide="${item.icon}" class="card-icon"></i>
+                        <div class="gallery-info" style="flex-grow:1;">
+                            <div class="gallery-title">${item.name}</div>
+                            <div class="gallery-subtitle">${item.desc}</div>
+                        </div>
+                        <div class="gallery-rating">${starsHtml}</div>
+                        <div class="gallery-action">
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="width:100%; font-size: 0.9em; white-space:nowrap;">
+                                ${translations[lang][btnTranslateKey] || 'Visit'} <i data-lucide="external-link" style="width: 14px; margin-left: 4px;"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+        
+        const renderToolsPage = () => {
+            const combinedResources = [...expandedRecommendationsData, ...toolsData];
+            const filtered = currentToolFilter === 'all' 
+                ? combinedResources 
+                : combinedResources.filter(item => item.tags && item.tags.includes(currentToolFilter));
+            
+            renderGallery('toolsGridContainer', filtered, 'visitTool');
+        };
 
-.auth-box .password-wrapper input {
-    padding-right: 40px;
-}
+        // --- DATA ARRAYS (unchanged) ---
+        const recommendedProvidersData = [
+            { name: "Namecheap", desc: "Best for budget domains", rating: 5, url: "https://namecheap.com/", icon: "tag", tags: ["domains"] },
+            { name: "Porkbun", desc: "Great UI & pricing", rating: 5, url: "https://porkbun.com/", icon: "piggy-bank", tags: ["domains"] },
+            { name: "Hostinger", desc: "Domain + Hosting bundles", rating: 4.5, url: "https://hostinger.com/", icon: "server", tags: ["domains", "hosting"] }
+        ];
 
-.auth-box .toggle-password {
-    position: absolute;
-    top: 50%;
-    right: 12px;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: var(--transition);
-}
+        const expandedRecommendationsData = [
+            ...recommendedProvidersData,
+            { name: "Google Workspace", desc: "Professional email & collaboration.", rating: 5, url: "https://workspace.google.com/", icon: "mail", tags: ["email"] },
+            { name: "ProtonMail", desc: "Privacy-focused secure email.", rating: 4.5, url: "https://proton.me/mail", icon: "shield", tags: ["email"] },
+            { name: "DigitalOcean", desc: "Developer-friendly cloud hosting.", rating: 4.5, url: "https://digitalocean.com/", icon: "cloud", tags: ["hosting"] },
+            { name: "Vercel", desc: "Simple scalable deployment for frontend apps.", rating: 5, url: "https://vercel.com/", icon: "triangle", tags: ["hosting"] }
+        ];
 
-.auth-box .toggle-password:hover {
-    color: var(--primary);
-}
+        const toolsData = [
+            { name: "MXToolbox", desc: "Comprehensive DNS & Email diagnostics", rating: 5, url: "https://mxtoolbox.com", icon: "mail-search", tags: ["dns", "email"] },
+            { name: "DNSChecker", desc: "Global DNS propagation check", rating: 5, url: "https://dnschecker.org", icon: "globe-2", tags: ["dns"] },
+            { name: "Whois.com", desc: "Domain lookup & registration info", rating: 4, url: "https://whois.com", icon: "search", tags: ["domains"] },
+            { name: "Cloudflare", desc: "Free DNS management & fast CDN", rating: 5, url: "https://cloudflare.com", icon: "cloud-lightning", tags: ["dns", "hosting"] },
+            { name: "ICANN Lookup", desc: "Official domain registration data", rating: 4.5, url: "https://lookup.icann.org/", icon: "building-2", tags: ["domains"] },
+            { name: "SSL Checker", desc: "Verify SSL certificate installation", rating: 4.5, url: "https://www.sslshopper.com/ssl-checker.html", icon: "shield-check", tags: ["ssl"] }
+        ];
 
-/* Loading state for auth buttons */
-.auth-box button.loading {
-    position: relative;
-    color: transparent;
-    pointer-events: none;
-}
+        // --- EVENT LISTENERS (modified to use Firestore operations) ---
+        document.body.addEventListener('click', (e) => { 
+            const menuItem = e.target.closest('.menu-item');
+            if (menuItem) { 
+                setActivePage(menuItem.dataset.page); 
+                mobileNav.classList.remove('open'); 
+                navOverlay.classList.remove('open'); 
+            } 
+            
+            const actionBtn = e.target.closest('.action-btn');
+            if (actionBtn) {
+                const domainId = actionBtn.dataset.id;
+                if (!domainId) return;
+                
+                if (actionBtn.title === 'Edit') { 
+                    const domain = domains.find(d => d.id == domainId);
+                    if (domain) openModal(domainModal, 'editDomain', 'saveProfile', domain); 
+                } else if (actionBtn.title === 'Delete') { 
+                    if (confirm('Are you sure?')) { 
+                        deleteDomain(domainId);
+                    } 
+                } else if (actionBtn.title === 'Add to Google Calendar') {
+                    const domain = domains.find(d => d.id == domainId);
+                    if (domain) window.open(generateGoogleCalendarLink(domain), '_blank');
+                } else if (actionBtn.title === 'Download iCal Event') {
+                    const domain = domains.find(d => d.id == domainId);
+                    if (domain) generateICal([domain]);
+                } else if (actionBtn.title === 'Check DNS' || actionBtn.classList.contains('dns-btn')) {
+                    const domain = domains.find(d => d.id == domainId);
+                    if (domain) fetchDnsRecords(domain.name);
+                } else if (actionBtn.title === 'Edit Provider') {
+                    const provider = providers.find(p => p.id == domainId);
+                    if (provider) openModal(providerModal, 'editProvider', 'saveProfile', provider);
+                } else if (actionBtn.title === 'Delete Provider') {
+                    const provider = providers.find(p => p.id == domainId);
+                    if (provider) {
+                        const isProviderInUse = domains.some(d => d.provider === provider.name);
+                        if (isProviderInUse) {
+                            showToast('Cannot delete a provider that has domains assigned to it.', 'danger');
+                            return;
+                        }
+                        if (confirm(`Are you sure you want to delete ${provider.name}?`)) {
+                            deleteProvider(provider.id);
+                        }
+                    }
+                } else if (actionBtn.title === 'Delete Notification') {
+                    deleteNotification(domainId);
+                }
+            }
 
-.auth-box button.loading::after {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border: 2px solid white;
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 0.8s linear infinite;
-}
+            // Auth modal close button
+            if (e.target.classList.contains('modal-close') && e.target.closest('#authModal')) {
+                hideAuthModal();
+            }
+        });
 
-/* Responsive adjustments for auth */
-@media (max-width: 480px) {
-    .auth-box {
-        width: 90%;
-        padding: 1.5rem;
-        margin: 20px;
-    }
-}
+        // Auth form submission
+        if (authForm) {
+            authForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('authEmail').value;
+                const password = document.getElementById('authPassword').value;
+                const confirmPassword = document.getElementById('authConfirmPassword')?.value;
+                handleAuth(email, password, confirmPassword);
+            });
+        }
 
-/* ===== RESPONSIVE BREAKPOINTS ===== */
+        // Auth toggle
+        if (authToggleBtn) {
+            authToggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleAuthMode();
+            });
+        }
 
-/* Extra Large Screens (1400px and above) */
-@media (min-width: 1400px) {
-    .container {
-        max-width: 1320px;
-        margin: 0 auto;
-    }
-}
+        // Logout
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', signOutUser);
+        }
 
-/* Large Screens (1200px - 1399px) */
-@media (max-width: 1399px) {
-    .stats-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
+        menuToggle.addEventListener('click', () => { 
+            mobileNav.classList.add('open'); 
+            navOverlay.classList.add('open'); 
+            lucide.createIcons(); 
+        });
+        
+        mobileNavClose.addEventListener('click', () => { 
+            mobileNav.classList.remove('open'); 
+            navOverlay.classList.remove('open'); 
+        });
+        
+        navOverlay.addEventListener('click', () => { 
+            mobileNav.classList.remove('open'); 
+            navOverlay.classList.remove('open'); 
+        });
+        
+        // New event listeners for Recommendations tags & Quick DNS
+        const toolFilterBtns = document.querySelectorAll('#toolsFilterTags .filter-tag');
+        toolFilterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                toolFilterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentToolFilter = e.target.dataset.tag;
+                renderToolsPage();
+                lucide.createIcons();
+            });
+        });
 
-/* Medium-Large Screens (992px - 1199px) */
-@media (max-width: 1199px) {
-    :root {
-        --sidebar-width: 260px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .charts-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    }
-}
+        if(quickDnsBtn && quickDnsInput) {
+            quickDnsBtn.addEventListener('click', () => {
+                const domain = quickDnsInput.value.trim();
+                if(domain) {
+                    fetchDnsRecords(domain);
+                } else {
+                    showToast('Please enter a domain.', 'warning');
+                }
+            });
+            quickDnsInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') quickDnsBtn.click();
+            });
+        }
+        
+        addDomainBtn.addEventListener('click', () => openModal(domainModal, 'addNewDomain', 'addDomain'));
+        if (addDomainBtnSecondary) {
+            addDomainBtnSecondary.addEventListener('click', () => openModal(domainModal, 'addNewDomain', 'addDomain'));
+        }
+        addProviderBtn.addEventListener('click', () => openModal(providerModal, 'addNewProvider', 'addProvider'));
+        
+        [domainModal, providerModal, credentialsModal, dnsModal].forEach(m => {
+            if(m) {
+                const closeBtn = m.querySelector('.modal-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => closeModal(m));
+                }
+                window.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+            }
+        });
 
-/* Tablet Screens (768px - 991px) */
-@media (max-width: 991px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-    
-    .sidebar.active {
-        transform: translateX(0);
-    }
-    
-    .main-content {
-        margin-left: 0;
-    }
-    
-    .menu-toggle {
-        display: block;
-    }
-    
-    .search-box {
-        width: 240px;
-    }
-    
-    .user-name {
-        display: none;
-    }
-    
-    .settings-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .providers-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
+        const providerSelect = document.getElementById('domainProvider');
+        if (providerSelect) {
+            providerSelect.addEventListener('change', function() {
+                const otherGroup = document.getElementById('otherProviderGroup');
+                if (otherGroup) {
+                    otherGroup.style.display = this.value === 'other' ? 'block' : 'none';
+                }
+            });
+        }
 
-/* Mobile Landscape (576px - 767px) */
-@media (max-width: 767px) {
-    .top-header {
-        padding: 0 1rem;
-    }
-    
-    .search-box {
-        display: none;
-    }
-    
-    .content {
-        padding: 1rem;
-    }
-    
-    .page-title {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .page-title h2 {
-        font-size: 1.5rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .charts-container {
-        gap: 1rem;
-    }
-    
-    .stat-card,
-    .card {
-        padding: 1.25rem;
-    }
-    
-    .providers-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .gallery-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .modal-content {
-        width: 95%;
-        margin: 1rem;
-    }
-    
-    .profile-picture-controls {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .profile-picture-controls .btn {
-        width: 100%;
-    }
-    
-    .calendar-day {
-        min-height: 80px;
-        font-size: 0.875rem;
-    }
-    
-    .calendar-event {
-        font-size: 0.7rem;
-        padding: 0.125rem 0.25rem;
-    }
-    
-    .input-group {
-        flex-direction: column;
-    }
-    
-    .input-group .btn {
-        width: 100%;
-    }
-    
-    .provider-actions {
-        flex-direction: column;
-    }
-    
-    .provider-actions .btn {
-        width: 100%;
-    }
-    
-    #persistent-notifications-container {
-        max-width: 90%;
-        right: 5%;
-    }
-}
+        domainForm.addEventListener('submit', function(e) { 
+            e.preventDefault(); 
+            if (!currentUser) return;
+            
+            let providerName = document.getElementById('domainProvider').value;
+            if (providerName === 'other') {
+                const otherProviderName = document.getElementById('otherProvider').value.trim();
+                if (otherProviderName && !providers.some(p => p.name.toLowerCase() === otherProviderName.toLowerCase())) {
+                    // Add new provider to Firestore
+                    addProvider({
+                        name: otherProviderName,
+                        url: '#',
+                        user: '',
+                        pass: '',
+                        uid: ''
+                    });
+                }
+                providerName = otherProviderName;
+            }
 
-/* Mobile Portrait (up to 575px) */
-@media (max-width: 575px) {
-    :root {
-        --header-height: 60px;
-    }
-    
-    .content {
-        padding: 0.75rem;
-    }
-    
-    .page-title h2 {
-        font-size: 1.25rem;
-    }
-    
-    .btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem;
-    }
-    
-    .stat-icon i {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .card-header {
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-    }
-    
-    .filter-tags {
-        gap: 0.375rem;
-    }
-    
-    .filter-tag {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.8125rem;
-    }
-    
-    .calendar-header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .calendar-header h3 {
-        order: -1;
-    }
-    
-    .calendar-grid {
-        gap: 0.25rem;
-    }
-    
-    .calendar-day {
-        min-height: 60px;
-        padding: 0.25rem;
-    }
-    
-    .calendar-day .day-number {
-        font-size: 0.75rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .calendar-event {
-        display: none;
-    }
-    
-    .modal-header {
-        padding: 1rem;
-    }
-    
-    .modal-body {
-        padding: 1rem;
-    }
-    
-    .auth-box {
-        padding: 1.5rem;
-    }
-    
-    .auth-box h2 {
-        font-size: 1.25rem;
-    }
-    
-    .toast {
-        left: 1rem;
-        right: 1rem;
-        bottom: 1rem;
-        transform: translateY(100%);
-        text-align: center;
-    }
-    
-    .toast.show {
-        transform: translateY(0);
-    }
-}
+            const domainData = {
+                name: document.getElementById('domainName').value,
+                provider: providerName,
+                purchaseDate: document.getElementById('purchaseDate').value,
+                renewalDate: document.getElementById('renewalDate').value,
+                purchasePrice: parseFloat(document.getElementById('purchasePrice').value),
+                renewalPrice: parseFloat(document.getElementById('renewalPrice').value),
+                autoRenew: document.getElementById('domainAutoRenew').checked
+            };
 
-/* Small Mobile (up to 375px) */
-@media (max-width: 375px) {
-    .user-profile {
-        gap: 0.75rem;
-    }
-    
-    .header-icon {
-        display: none;
-    }
-    
-    .calendar-day-name {
-        font-size: 0.75rem;
-    }
-    
-    .stat-card {
-        padding: 1rem;
-    }
-    
-    .stat-icon {
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.25rem;
-    }
-    
-    .stat-label {
-        font-size: 0.75rem;
-    }
-}
+            const domainId = document.getElementById('domainId').value;
+            if (domainId) {
+                updateDomain(domainId, domainData);
+            } else {
+                addDomain(domainData);
+            }
+            
+            closeModal(domainModal);
+        });
 
-/* Print Styles */
-@media print {
-    .sidebar,
-    .top-header,
-    .main-footer,
-    .btn,
-    .modal,
-    .toast,
-    #authContainer {
-        display: none !important;
-    }
-    
-    .main-content {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    .content {
-        padding: 1rem !important;
-    }
-    
-    .page {
-        display: block !important;
-    }
-    
-    body {
-        background: white;
-        color: black;
-    }
-    
-    .card {
-        break-inside: avoid;
-        border: 1px solid #ddd;
-        box-shadow: none;
-    }
-}
+        providerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+            
+            const providerId = document.getElementById('providerId').value;
+            const newName = document.getElementById('providerName').value;
 
+            const providerData = {
+                name: newName,
+                url: document.getElementById('providerUrl').value,
+                user: document.getElementById('providerUser').value,
+                pass: document.getElementById('providerPass').value,
+                uid: document.getElementById('providerUid').value
+            };
+            
+            if (providerId) {
+                // Update existing provider
+                const existingProvider = providers.find(p => p.id === providerId);
+                if (existingProvider && existingProvider.name !== newName) {
+                    // Update domain references
+                    domains.forEach(domain => {
+                        if (domain.provider === existingProvider.name) {
+                            updateDomain(domain.id, {
+                                ...domain,
+                                provider: newName
+                            });
+                        }
+                    });
+                }
+                updateProvider(providerId, providerData);
+            } else { 
+                addProvider(providerData);
+            }
 
+            closeModal(providerModal);
+        });
+        
+        settingsProfileForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            updateSettings({
+                ...settings,
+                username: document.getElementById('settingUsername').value
+            });
+            showToast('Profile updated!');
+        });
+        
+        if (uploadPicBtn) {
+            uploadPicBtn.addEventListener('click', () => profilePicUpload.click());
+        }
 
+        if (removePicBtn) {
+            removePicBtn.addEventListener('click', () => {
+                updateSettings({
+                    ...settings,
+                    profilePicture: null
+                });
+                showToast('Profile picture removed.');
+            });
+        }
+
+        if (profilePicUpload) {
+            profilePicUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        updateSettings({
+                            ...settings,
+                            profilePicture: event.target.result
+                        });
+                        showToast('Profile picture updated!');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        if (customColorPicker) {
+            customColorPicker.addEventListener('input', (e) => {
+                updateSettings({
+                    ...settings,
+                    theme: 'custom',
+                    customColor: e.target.value
+                });
+            });
+        }
+
+        providersGrid.addEventListener('click', (e) => {
+            const target = e.target.closest('.credentials-btn');
+            if (target) {
+                const providerId = target.dataset.id;
+                const provider = providers.find(p => p.id == providerId);
+                if (provider) {
+                    openModal(credentialsModal, '', '', provider);
+                }
+            }
+        });
+        
+        if (headerNotificationIcon) {
+            headerNotificationIcon.addEventListener('click', () => {
+                setActivePage('notifications');
+            });
+        }
+        
+        if (translateBtn) {
+            translateBtn.addEventListener('click', () => {
+                const newLang = settings.language === 'en' ? 'es' : 'en';
+                updateSettings({
+                    ...settings,
+                    language: newLang
+                });
+            });
+        }
+        
+        if (costCard) {
+            costCard.addEventListener('click', () => {
+                costCard.classList.toggle('is-flipped');
+            });
+        }
+        
+        // Calendar navigation
+        if (prevMonthBtn) {
+            prevMonthBtn.addEventListener('click', () => {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                renderCalendar();
+            });
+        }
+        
+        if (nextMonthBtn) {
+            nextMonthBtn.addEventListener('click', () => {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                renderCalendar();
+            });
+        }
+        
+        if (downloadIcsBtn) {
+            downloadIcsBtn.addEventListener('click', () => {
+                const year = currentCalendarDate.getFullYear();
+                const month = currentCalendarDate.getMonth();
+                const renewalsInMonth = domains.filter(d => {
+                    const renewalDate = new Date(d.renewalDate);
+                    return renewalDate.getFullYear() === year && renewalDate.getMonth() === month;
+                });
+                if (renewalsInMonth.length > 0) {
+                    generateICal(renewalsInMonth, true);
+                } else {
+                    showToast('No renewals this month to export.', 'danger');
+                }
+            });
+        }
+        
+        if (syncGCalBtn) {
+            syncGCalBtn.addEventListener('click', () => {
+                showToast('Google Calendar bulk sync is a premium feature not yet implemented.', 'warning');
+            });
+        }
+
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function() {
+                const passwordInput = document.getElementById('providerPass');
+                if (passwordInput) {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+                    lucide.createIcons();
+                }
+            });
+        }
+
+        // Make search auto-switch to the domains tab to show results
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => { 
+                const term = e.target.value.toLowerCase(); 
+                
+                if (term.trim() !== '' && !document.getElementById('page-domains').classList.contains('active')) {
+                    setActivePage('domains');
+                }
+                
+                renderDomains(domains.filter(d => 
+                    d.name.toLowerCase().includes(term) || 
+                    d.provider.toLowerCase().includes(term)
+                )); 
+            });
+
+            // Handle the "Enter" key for better UX
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!document.getElementById('page-domains').classList.contains('active')) {
+                        setActivePage('domains');
+                    }
+                }
+            });
+        }
+
+        const showToast = (message, type = 'success') => { 
+            const t = document.getElementById('toast'); 
+            if (t) {
+                t.textContent = message; 
+                t.style.backgroundColor = type === 'danger' ? 'var(--danger)' : (type === 'warning' ? 'var(--warning)' : 'var(--bg-hover)');
+                t.style.borderLeftColor = type === 'danger' ? 'var(--danger)' : (type === 'warning' ? 'var(--warning)' : 'var(--primary)');
+                t.classList.add('show'); 
+                setTimeout(() => t.classList.remove('show'), 3000); 
+            }
+        };
+
+        const setLanguage = (lang) => {
+            document.querySelectorAll('[data-translate-key]').forEach(el => {
+                const key = el.dataset.translateKey;
+                const translation = translations[lang] ? translations[lang][key] : null;
+                if (translation) {
+                    if (el.placeholder !== undefined) {
+                        el.placeholder = translation;
+                    } else {
+                        const icon = el.querySelector('i');
+                        if (icon && (el.classList.contains('btn') || (el.parentElement && el.parentElement.classList.contains('btn')))) {
+                            const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+                            if (textNode) textNode.textContent = ` ${translation}`;
+                        } else {
+                            el.textContent = translation;
+                        }
+                    }
+                }
+            });
+        };
+
+        // Helper function to create auth modal if it doesn't exist
+        function createAuthModal() {
+            const modalHTML = `
+                <div id="authModal" class="modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 400px;">
+                        <span class="modal-close">&times;</span>
+                        <h2 id="authTitle">Login</h2>
+                        <form id="authForm">
+                            <div class="form-group">
+                                <label for="authEmail" data-translate-key="email">Email</label>
+                                <input type="email" id="authEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="authPassword" data-translate-key="password">Password</label>
+                                <input type="password" id="authPassword" required>
+                            </div>
+                            <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                                <label for="authConfirmPassword" data-translate-key="confirmPassword">Confirm Password</label>
+                                <input type="password" id="authConfirmPassword">
+                            </div>
+                            <div id="authError" class="error-message" style="display: none; color: var(--danger); margin-bottom: 10px;"></div>
+                            <button type="submit" class="btn btn-primary" id="authSubmitBtn" style="width: 100%;" data-translate-key="login">Login</button>
+                            <p id="authToggleBtn" style="margin-top: 15px; text-align: center;">
+                                <a href="#">Sign Up</a>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // Initial setup - no local storage loading
+        // Just apply default settings until user logs in
+        settings = {
+            username: 'User',
+            theme: 'orange',
+            customColor: null,
+            profilePicture: null,
+            language: 'en'
+        };
+        
+        applySettings();
+        setLanguage('en');
+    });
+</script>
