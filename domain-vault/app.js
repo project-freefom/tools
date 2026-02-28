@@ -88,7 +88,20 @@ class DomainVault {
             }
         };
         this.currentLang = 'en';
+        
+        // Hide loading immediately when constructor runs
+        this.hideLoading();
+        
+        // Initialize the app
         this.init();
+    }
+
+    // New method to hide loading indicator
+    hideLoading() {
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
     }
 
     async init() {
@@ -104,6 +117,8 @@ class DomainVault {
         } catch (error) {
             console.error('Initialization error:', error);
             this.showToast('Error initializing application', 'error');
+            // Ensure loading is hidden even if there's an error
+            this.hideLoading();
         }
     }
 
@@ -111,26 +126,41 @@ class DomainVault {
         // Load providers from localStorage or use defaults
         const savedProviders = localStorage.getItem('providers');
         if (savedProviders) {
-            this.providers = JSON.parse(savedProviders);
+            try {
+                this.providers = JSON.parse(savedProviders);
+            } catch (e) {
+                console.error('Error parsing providers:', e);
+                this.providers = this.getDefaultProviders();
+            }
         } else {
-            this.providers = [
-                { id: '1', name: 'Namecheap', url: 'https://www.namecheap.com', domains: 12 },
-                { id: '2', name: 'GoDaddy', url: 'https://www.godaddy.com', domains: 8 },
-                { id: '3', name: 'Google Domains', url: 'https://domains.google', domains: 4 }
-            ];
+            this.providers = this.getDefaultProviders();
         }
 
         // Load domains from localStorage or use defaults
         const savedDomains = localStorage.getItem('domains');
         if (savedDomains) {
-            this.domains = JSON.parse(savedDomains);
+            try {
+                this.domains = JSON.parse(savedDomains);
+            } catch (e) {
+                console.error('Error parsing domains:', e);
+                this.domains = this.generateSampleDomains();
+            }
         } else {
             this.domains = this.generateSampleDomains();
         }
     }
 
+    getDefaultProviders() {
+        return [
+            { id: '1', name: 'Namecheap', url: 'https://www.namecheap.com', username: '', password: '', userId: '' },
+            { id: '2', name: 'GoDaddy', url: 'https://www.godaddy.com', username: '', password: '', userId: '' },
+            { id: '3', name: 'Google Domains', url: 'https://domains.google', username: '', password: '', userId: '' },
+            { id: '4', name: 'Cloudflare', url: 'https://www.cloudflare.com', username: '', password: '', userId: '' }
+        ];
+    }
+
     generateSampleDomains() {
-        const providers = ['Namecheap', 'GoDaddy', 'Google Domains'];
+        const providers = ['Namecheap', 'GoDaddy', 'Google Domains', 'Cloudflare'];
         const domains = [];
         const today = new Date();
 
@@ -144,7 +174,8 @@ class DomainVault {
                 provider: providers[Math.floor(Math.random() * providers.length)],
                 renewalDate: renewalDate.toISOString().split('T')[0],
                 price: (Math.random() * 20 + 8).toFixed(2),
-                status: Math.random() > 0.7 ? 'expiring' : 'active',
+                purchaseDate: today.toISOString().split('T')[0],
+                purchasePrice: (Math.random() * 15 + 5).toFixed(2),
                 autoRenew: Math.random() > 0.5
             });
         }
@@ -159,27 +190,46 @@ class DomainVault {
 
         // Add domain buttons
         document.querySelectorAll('#addDomainBtn, #addDomainBtnSecondary').forEach(btn => {
-            btn.addEventListener('click', () => this.openDomainModal());
+            if (btn) {
+                btn.addEventListener('click', () => this.openDomainModal());
+            }
         });
 
         // Add provider button
-        document.getElementById('addProviderBtn')?.addEventListener('click', () => this.openProviderModal());
+        const addProviderBtn = document.getElementById('addProviderBtn');
+        if (addProviderBtn) {
+            addProviderBtn.addEventListener('click', () => this.openProviderModal());
+        }
 
         // Search input
-        document.getElementById('searchInput')?.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        }
 
         // Translate button
-        document.getElementById('translateBtn')?.addEventListener('click', () => this.toggleLanguage());
+        const translateBtn = document.getElementById('translateBtn');
+        if (translateBtn) {
+            translateBtn.addEventListener('click', () => this.toggleLanguage());
+        }
 
         // Notification icon
-        document.getElementById('headerNotificationIcon')?.addEventListener('click', () => {
-            document.querySelector('[data-page="notifications"]').click();
-        });
+        const notificationIcon = document.getElementById('headerNotificationIcon');
+        if (notificationIcon) {
+            notificationIcon.addEventListener('click', () => {
+                const notifMenuItem = document.querySelector('[data-page="notifications"]');
+                if (notifMenuItem) notifMenuItem.click();
+            });
+        }
 
         // User avatar click
-        document.getElementById('userAvatar')?.addEventListener('click', () => {
-            document.querySelector('[data-page="settings"]').click();
-        });
+        const userAvatar = document.getElementById('userAvatar');
+        if (userAvatar) {
+            userAvatar.addEventListener('click', () => {
+                const settingsMenuItem = document.querySelector('[data-page="settings"]');
+                if (settingsMenuItem) settingsMenuItem.click();
+            });
+        }
 
         // Modal close buttons
         document.querySelectorAll('.modal-close').forEach(btn => {
@@ -196,10 +246,16 @@ class DomainVault {
         });
 
         // Domain form submit
-        document.getElementById('domainForm')?.addEventListener('submit', (e) => this.handleDomainSubmit(e));
+        const domainForm = document.getElementById('domainForm');
+        if (domainForm) {
+            domainForm.addEventListener('submit', (e) => this.handleDomainSubmit(e));
+        }
 
         // Provider form submit
-        document.getElementById('providerForm')?.addEventListener('submit', (e) => this.handleProviderSubmit(e));
+        const providerForm = document.getElementById('providerForm');
+        if (providerForm) {
+            providerForm.addEventListener('submit', (e) => this.handleProviderSubmit(e));
+        }
 
         // Password toggle
         document.querySelectorAll('.toggle-password').forEach(icon => {
@@ -207,18 +263,28 @@ class DomainVault {
         });
 
         // Fetch WHOIS
-        document.getElementById('fetchWhoisBtn')?.addEventListener('click', () => this.fetchWhois());
+        const fetchWhoisBtn = document.getElementById('fetchWhoisBtn');
+        if (fetchWhoisBtn) {
+            fetchWhoisBtn.addEventListener('click', () => this.fetchWhois());
+        }
 
         // Calendar navigation
-        document.getElementById('prevMonthBtn')?.addEventListener('click', () => this.navigateCalendar(-1));
-        document.getElementById('nextMonthBtn')?.addEventListener('click', () => this.navigateCalendar(1));
+        const prevMonthBtn = document.getElementById('prevMonthBtn');
+        const nextMonthBtn = document.getElementById('nextMonthBtn');
+        if (prevMonthBtn) prevMonthBtn.addEventListener('click', () => this.navigateCalendar(-1));
+        if (nextMonthBtn) nextMonthBtn.addEventListener('click', () => this.navigateCalendar(1));
 
         // Sync calendar buttons
-        document.getElementById('syncGCalBtn')?.addEventListener('click', () => this.syncWithGoogleCalendar());
-        document.getElementById('downloadIcsBtn')?.addEventListener('click', () => this.downloadIcs());
+        const syncGCalBtn = document.getElementById('syncGCalBtn');
+        const downloadIcsBtn = document.getElementById('downloadIcsBtn');
+        if (syncGCalBtn) syncGCalBtn.addEventListener('click', () => this.syncWithGoogleCalendar());
+        if (downloadIcsBtn) downloadIcsBtn.addEventListener('click', () => this.downloadIcs());
 
         // Quick DNS check
-        document.getElementById('quickDnsBtn')?.addEventListener('click', () => this.quickDnsCheck());
+        const quickDnsBtn = document.getElementById('quickDnsBtn');
+        if (quickDnsBtn) {
+            quickDnsBtn.addEventListener('click', () => this.quickDnsCheck());
+        }
 
         // Filter tags for tools
         document.querySelectorAll('.filter-tag').forEach(tag => {
@@ -226,7 +292,10 @@ class DomainVault {
         });
 
         // Settings profile form
-        document.getElementById('settingsProfileForm')?.addEventListener('submit', (e) => this.handleProfileSubmit(e));
+        const settingsProfileForm = document.getElementById('settingsProfileForm');
+        if (settingsProfileForm) {
+            settingsProfileForm.addEventListener('submit', (e) => this.handleProfileSubmit(e));
+        }
 
         // Color palette
         document.querySelectorAll('.color-swatch').forEach(swatch => {
@@ -234,25 +303,40 @@ class DomainVault {
         });
 
         // Custom color picker
-        document.getElementById('customColorPicker')?.addEventListener('change', (e) => {
-            this.setAccentColor(e.target.value);
-        });
+        const customColorPicker = document.getElementById('customColorPicker');
+        if (customColorPicker) {
+            customColorPicker.addEventListener('change', (e) => {
+                this.setAccentColor(e.target.value);
+            });
+        }
 
         // Upload profile picture
-        document.getElementById('uploadPicBtn')?.addEventListener('click', () => {
-            document.getElementById('profilePicUpload').click();
-        });
-
-        document.getElementById('profilePicUpload')?.addEventListener('change', (e) => this.handleProfilePictureUpload(e));
+        const uploadPicBtn = document.getElementById('uploadPicBtn');
+        const profilePicUpload = document.getElementById('profilePicUpload');
+        if (uploadPicBtn && profilePicUpload) {
+            uploadPicBtn.addEventListener('click', () => {
+                profilePicUpload.click();
+            });
+            profilePicUpload.addEventListener('change', (e) => this.handleProfilePictureUpload(e));
+        }
 
         // Remove profile picture
-        document.getElementById('removePicBtn')?.addEventListener('click', () => this.removeProfilePicture());
+        const removePicBtn = document.getElementById('removePicBtn');
+        if (removePicBtn) {
+            removePicBtn.addEventListener('click', () => this.removeProfilePicture());
+        }
 
-        // Theme toggle (if you add a theme toggle button)
-        document.getElementById('themeToggle')?.addEventListener('click', () => this.toggleTheme());
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => this.toggleTheme());
+        }
 
         // Logout
-        document.getElementById('logoutBtn')?.addEventListener('click', () => this.logout());
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.logout());
+        }
     }
 
     handleNavigation(e) {
@@ -265,7 +349,10 @@ class DomainVault {
         
         // Show selected page
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        document.getElementById(`page-${pageId}`)?.classList.add('page active');
+        const targetPage = document.getElementById(`page-${pageId}`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
         
         // Close mobile sidebar if open
         if (window.innerWidth <= 991) {
@@ -309,13 +396,19 @@ class DomainVault {
         const uniqueProviders = new Set(this.domains.map(d => d.provider)).size;
         const expiringSoon = this.domains.filter(d => this.getDaysUntilRenewal(d.renewalDate) <= 30).length;
         const yearlyTotal = this.domains.reduce((sum, d) => sum + parseFloat(d.price), 0);
-        const totalInvestment = yearlyTotal * 2; // Example calculation
+        const totalInvestment = this.domains.reduce((sum, d) => sum + (parseFloat(d.purchasePrice) || parseFloat(d.price)), 0);
 
-        document.getElementById('stat-total-domains').textContent = totalDomains;
-        document.getElementById('stat-domain-providers').textContent = uniqueProviders;
-        document.getElementById('stat-yearly-expenses').textContent = `$${yearlyTotal.toFixed(2)}`;
-        document.getElementById('stat-total-investment').textContent = `$${totalInvestment.toFixed(2)}`;
-        document.getElementById('stat-expiring-soon').textContent = expiringSoon;
+        const totalDomainsEl = document.getElementById('stat-total-domains');
+        const providersEl = document.getElementById('stat-domain-providers');
+        const yearlyEl = document.getElementById('stat-yearly-expenses');
+        const investmentEl = document.getElementById('stat-total-investment');
+        const expiringEl = document.getElementById('stat-expiring-soon');
+
+        if (totalDomainsEl) totalDomainsEl.textContent = totalDomains;
+        if (providersEl) providersEl.textContent = uniqueProviders;
+        if (yearlyEl) yearlyEl.textContent = `$${yearlyTotal.toFixed(2)}`;
+        if (investmentEl) investmentEl.textContent = `$${totalInvestment.toFixed(2)}`;
+        if (expiringEl) expiringEl.textContent = expiringSoon;
 
         // Update urgent renewals
         this.renderUrgentRenewals();
@@ -338,23 +431,38 @@ class DomainVault {
             .sort((a, b) => a.daysLeft - b.daysLeft)
             .slice(0, 5);
 
+        if (urgentDomains.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No urgent renewals</td></tr>';
+            return;
+        }
+
         tbody.innerHTML = urgentDomains.map(domain => `
             <tr>
                 <td>${domain.name}</td>
                 <td>${this.formatDate(domain.renewalDate)}</td>
                 <td>
-                    <span class="status-badge ${this.getStatusClass(domain.daysLeft)}">
+                    <span class="status-badge status-${this.getStatusClass(domain.daysLeft)}">
                         ${domain.daysLeft} days
                     </span>
                 </td>
                 <td>$${domain.price}</td>
             </tr>
         `).join('');
+
+        // Reinitialize icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
     }
 
     renderDomains() {
         const tbody = document.getElementById('domainsTableBody');
         if (!tbody) return;
+
+        if (this.domains.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">No domains added yet</td></tr>';
+            return;
+        }
 
         tbody.innerHTML = this.domains.map(domain => {
             const daysLeft = this.getDaysUntilRenewal(domain.renewalDate);
@@ -397,6 +505,11 @@ class DomainVault {
     renderProviders() {
         const grid = document.getElementById('providersGrid');
         if (!grid) return;
+
+        if (this.providers.length === 0) {
+            grid.innerHTML = '<p class="text-muted text-center">No providers added yet</p>';
+            return;
+        }
 
         grid.innerHTML = this.providers.map(provider => {
             const domainCount = this.domains.filter(d => d.provider === provider.name).length;
@@ -518,17 +631,22 @@ class DomainVault {
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'];
         
-        document.getElementById('currentMonthYear').textContent = 
-            `${monthNames[this.currentMonth]} ${this.currentYear}`;
+        const monthYearEl = document.getElementById('currentMonthYear');
+        if (monthYearEl) {
+            monthYearEl.textContent = `${monthNames[this.currentMonth]} ${this.currentYear}`;
+        }
 
         const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
         const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
         
         // Render day names
         const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        document.getElementById('calendarDayNames').innerHTML = dayNames.map(day => 
-            `<div class="calendar-day-name">${day}</div>`
-        ).join('');
+        const dayNamesEl = document.getElementById('calendarDayNames');
+        if (dayNamesEl) {
+            dayNamesEl.innerHTML = dayNames.map(day => 
+                `<div class="calendar-day-name">${day}</div>`
+            ).join('');
+        }
 
         // Render days
         let calendarHtml = '';
@@ -553,7 +671,10 @@ class DomainVault {
             `;
         }
 
-        document.getElementById('calendarGrid').innerHTML = calendarHtml;
+        const calendarGrid = document.getElementById('calendarGrid');
+        if (calendarGrid) {
+            calendarGrid.innerHTML = calendarHtml;
+        }
         
         if (window.lucide) {
             lucide.createIcons();
@@ -581,45 +702,61 @@ class DomainVault {
             // Edit mode
             const domain = this.domains.find(d => d.id === domainId);
             if (domain) {
-                title.textContent = this.translate('editDomain') || 'Edit Domain';
-                submitBtn.textContent = this.translate('save') || 'Save';
+                if (title) title.textContent = 'Edit Domain';
+                if (submitBtn) submitBtn.textContent = 'Save Changes';
                 this.populateDomainForm(domain);
             }
         } else {
             // Add mode
-            title.textContent = this.translate('addNewDomain') || 'Add New Domain';
-            submitBtn.textContent = this.translate('addDomain') || 'Add Domain';
-            document.getElementById('domainForm').reset();
-            document.getElementById('domainId').value = '';
+            if (title) title.textContent = 'Add New Domain';
+            if (submitBtn) submitBtn.textContent = 'Add Domain';
+            const form = document.getElementById('domainForm');
+            if (form) form.reset();
+            const domainIdField = document.getElementById('domainId');
+            if (domainIdField) domainIdField.value = '';
         }
         
-        modal.classList.add('active');
+        if (modal) modal.classList.add('active');
     }
 
     populateDomainForm(domain) {
-        document.getElementById('domainId').value = domain.id;
-        document.getElementById('domainName').value = domain.name;
-        document.getElementById('domainProvider').value = domain.provider;
-        document.getElementById('purchaseDate').value = domain.purchaseDate || '';
-        document.getElementById('renewalDate').value = domain.renewalDate;
-        document.getElementById('purchasePrice').value = domain.purchasePrice || '';
-        document.getElementById('renewalPrice').value = domain.price;
-        document.getElementById('domainAutoRenew').checked = domain.autoRenew || false;
+        const domainIdField = document.getElementById('domainId');
+        const domainNameField = document.getElementById('domainName');
+        const domainProviderField = document.getElementById('domainProvider');
+        const purchaseDateField = document.getElementById('purchaseDate');
+        const renewalDateField = document.getElementById('renewalDate');
+        const purchasePriceField = document.getElementById('purchasePrice');
+        const renewalPriceField = document.getElementById('renewalPrice');
+        const autoRenewField = document.getElementById('domainAutoRenew');
+
+        if (domainIdField) domainIdField.value = domain.id;
+        if (domainNameField) domainNameField.value = domain.name;
+        if (domainProviderField) domainProviderField.value = domain.provider;
+        if (purchaseDateField) purchaseDateField.value = domain.purchaseDate || '';
+        if (renewalDateField) renewalDateField.value = domain.renewalDate;
+        if (purchasePriceField) purchasePriceField.value = domain.purchasePrice || '';
+        if (renewalPriceField) renewalPriceField.value = domain.price;
+        if (autoRenewField) autoRenewField.checked = domain.autoRenew || false;
     }
 
     async handleDomainSubmit(e) {
         e.preventDefault();
         
-        const domainId = document.getElementById('domainId').value;
+        const domainId = document.getElementById('domainId')?.value;
         const domainData = {
-            name: document.getElementById('domainName').value,
-            provider: document.getElementById('domainProvider').value,
-            renewalDate: document.getElementById('renewalDate').value,
-            price: document.getElementById('renewalPrice').value,
-            autoRenew: document.getElementById('domainAutoRenew').checked,
-            purchaseDate: document.getElementById('purchaseDate').value,
-            purchasePrice: document.getElementById('purchasePrice').value
+            name: document.getElementById('domainName')?.value,
+            provider: document.getElementById('domainProvider')?.value,
+            renewalDate: document.getElementById('renewalDate')?.value,
+            price: document.getElementById('renewalPrice')?.value,
+            autoRenew: document.getElementById('domainAutoRenew')?.checked || false,
+            purchaseDate: document.getElementById('purchaseDate')?.value,
+            purchasePrice: document.getElementById('purchasePrice')?.value
         };
+
+        if (!domainData.name || !domainData.provider || !domainData.renewalDate || !domainData.price) {
+            this.showToast('Please fill in all required fields', 'error');
+            return;
+        }
 
         if (domainId) {
             // Update existing domain
@@ -653,41 +790,55 @@ class DomainVault {
             // Edit mode
             const provider = this.providers.find(p => p.id === providerId);
             if (provider) {
-                title.textContent = this.translate('editProvider') || 'Edit Provider';
-                submitBtn.textContent = this.translate('save') || 'Save';
+                if (title) title.textContent = 'Edit Provider';
+                if (submitBtn) submitBtn.textContent = 'Save Changes';
                 this.populateProviderForm(provider);
             }
         } else {
             // Add mode
-            title.textContent = this.translate('addNewProvider') || 'Add New Provider';
-            submitBtn.textContent = this.translate('addProvider') || 'Add Provider';
-            document.getElementById('providerForm').reset();
-            document.getElementById('providerId').value = '';
+            if (title) title.textContent = 'Add New Provider';
+            if (submitBtn) submitBtn.textContent = 'Add Provider';
+            const form = document.getElementById('providerForm');
+            if (form) form.reset();
+            const providerIdField = document.getElementById('providerId');
+            if (providerIdField) providerIdField.value = '';
         }
         
-        modal.classList.add('active');
+        if (modal) modal.classList.add('active');
     }
 
     populateProviderForm(provider) {
-        document.getElementById('providerId').value = provider.id;
-        document.getElementById('providerName').value = provider.name;
-        document.getElementById('providerUrl').value = provider.url;
-        document.getElementById('providerUser').value = provider.username || '';
-        document.getElementById('providerPass').value = provider.password || '';
-        document.getElementById('providerUid').value = provider.userId || '';
+        const providerIdField = document.getElementById('providerId');
+        const providerNameField = document.getElementById('providerName');
+        const providerUrlField = document.getElementById('providerUrl');
+        const providerUserField = document.getElementById('providerUser');
+        const providerPassField = document.getElementById('providerPass');
+        const providerUidField = document.getElementById('providerUid');
+
+        if (providerIdField) providerIdField.value = provider.id;
+        if (providerNameField) providerNameField.value = provider.name;
+        if (providerUrlField) providerUrlField.value = provider.url;
+        if (providerUserField) providerUserField.value = provider.username || '';
+        if (providerPassField) providerPassField.value = provider.password || '';
+        if (providerUidField) providerUidField.value = provider.userId || '';
     }
 
     handleProviderSubmit(e) {
         e.preventDefault();
         
-        const providerId = document.getElementById('providerId').value;
+        const providerId = document.getElementById('providerId')?.value;
         const providerData = {
-            name: document.getElementById('providerName').value,
-            url: document.getElementById('providerUrl').value,
-            username: document.getElementById('providerUser').value,
-            password: document.getElementById('providerPass').value,
-            userId: document.getElementById('providerUid').value
+            name: document.getElementById('providerName')?.value,
+            url: document.getElementById('providerUrl')?.value,
+            username: document.getElementById('providerUser')?.value,
+            password: document.getElementById('providerPass')?.value,
+            userId: document.getElementById('providerUid')?.value
         };
+
+        if (!providerData.name || !providerData.url) {
+            this.showToast('Please fill in all required fields', 'error');
+            return;
+        }
 
         if (providerId) {
             // Update existing provider
@@ -722,8 +873,10 @@ class DomainVault {
     }
 
     deleteProvider(providerId) {
-        const domainsWithProvider = this.domains.filter(d => d.provider === 
-            this.providers.find(p => p.id === providerId)?.name);
+        const provider = this.providers.find(p => p.id === providerId);
+        if (!provider) return;
+
+        const domainsWithProvider = this.domains.filter(d => d.provider === provider.name);
         
         if (domainsWithProvider.length > 0) {
             if (!confirm(`This provider has ${domainsWithProvider.length} domains. Deleting it may affect these domains. Continue?`)) {
@@ -751,11 +904,16 @@ class DomainVault {
 
     viewDns(domainName) {
         const modal = document.getElementById('dnsModal');
-        document.getElementById('dnsDomainLabel').textContent = domainName;
-        document.getElementById('dnsLoading').style.display = 'block';
-        document.getElementById('dnsTableWrapper').style.display = 'none';
-        document.getElementById('dnsError').style.display = 'none';
-        modal.classList.add('active');
+        const domainLabel = document.getElementById('dnsDomainLabel');
+        const loading = document.getElementById('dnsLoading');
+        const tableWrapper = document.getElementById('dnsTableWrapper');
+        const error = document.getElementById('dnsError');
+
+        if (domainLabel) domainLabel.textContent = domainName;
+        if (loading) loading.style.display = 'block';
+        if (tableWrapper) tableWrapper.style.display = 'none';
+        if (error) error.style.display = 'none';
+        if (modal) modal.classList.add('active');
 
         // Simulate DNS lookup
         setTimeout(() => {
@@ -772,16 +930,21 @@ class DomainVault {
             { type: 'TXT', value: 'v=spf1 include:_spf.google.com ~all' }
         ];
 
-        document.getElementById('dnsLoading').style.display = 'none';
-        document.getElementById('dnsTableWrapper').style.display = 'block';
-        
+        const loading = document.getElementById('dnsLoading');
+        const tableWrapper = document.getElementById('dnsTableWrapper');
         const tbody = document.getElementById('dnsTableBody');
-        tbody.innerHTML = sampleRecords.map(record => `
-            <tr>
-                <td><span class="dns-badge">${record.type}</span></td>
-                <td>${record.value}</td>
-            </tr>
-        `).join('');
+
+        if (loading) loading.style.display = 'none';
+        if (tableWrapper) tableWrapper.style.display = 'block';
+        
+        if (tbody) {
+            tbody.innerHTML = sampleRecords.map(record => `
+                <tr>
+                    <td><span class="dns-badge">${record.type}</span></td>
+                    <td>${record.value}</td>
+                </tr>
+            `).join('');
+        }
     }
 
     viewCredentials(providerId) {
@@ -789,14 +952,21 @@ class DomainVault {
         if (!provider) return;
 
         const modal = document.getElementById('credentialsModal');
-        document.getElementById('credUser').textContent = provider.username || 'Not set';
-        document.getElementById('credPass').textContent = provider.password || 'Not set';
-        document.getElementById('credUid').textContent = provider.userId || 'Not set';
-        modal.classList.add('active');
+        const credUser = document.getElementById('credUser');
+        const credPass = document.getElementById('credPass');
+        const credUid = document.getElementById('credUid');
+
+        if (credUser) credUser.textContent = provider.username || 'Not set';
+        if (credPass) credPass.textContent = provider.password || 'Not set';
+        if (credUid) credUid.textContent = provider.userId || 'Not set';
+        if (modal) modal.classList.add('active');
     }
 
     quickDnsCheck() {
-        const domain = document.getElementById('quickDnsInput').value.trim();
+        const input = document.getElementById('quickDnsInput');
+        if (!input) return;
+        
+        const domain = input.value.trim();
         if (!domain) {
             this.showToast('Please enter a domain name', 'warning');
             return;
@@ -824,29 +994,40 @@ class DomainVault {
     }
 
     async fetchWhois() {
-        const domain = document.getElementById('domainName').value.trim();
+        const domainInput = document.getElementById('domainName');
+        if (!domainInput) return;
+        
+        const domain = domainInput.value.trim();
         if (!domain) {
             this.showToast('Please enter a domain name', 'warning');
             return;
         }
 
         const status = document.getElementById('whoisStatus');
-        status.style.display = 'block';
-        status.textContent = 'Fetching WHOIS data...';
+        if (status) {
+            status.style.display = 'block';
+            status.textContent = 'Fetching WHOIS data...';
+            status.style.color = 'var(--primary)';
+        }
 
         // Simulate WHOIS fetch
         setTimeout(() => {
             const randomDate = new Date();
             randomDate.setFullYear(randomDate.getFullYear() + 1);
             
-            document.getElementById('renewalDate').value = randomDate.toISOString().split('T')[0];
-            document.getElementById('purchaseDate').value = new Date().toISOString().split('T')[0];
+            const renewalDate = document.getElementById('renewalDate');
+            const purchaseDate = document.getElementById('purchaseDate');
             
-            status.textContent = 'Domain information auto-filled!';
-            status.style.color = 'var(--success)';
+            if (renewalDate) renewalDate.value = randomDate.toISOString().split('T')[0];
+            if (purchaseDate) purchaseDate.value = new Date().toISOString().split('T')[0];
+            
+            if (status) {
+                status.textContent = 'Domain information auto-filled!';
+                status.style.color = 'var(--success)';
+            }
             
             setTimeout(() => {
-                status.style.display = 'none';
+                if (status) status.style.display = 'none';
             }, 3000);
         }, 2000);
     }
@@ -863,42 +1044,47 @@ class DomainVault {
         );
 
         const tbody = document.getElementById('domainsTableBody');
-        if (tbody) {
-            tbody.innerHTML = filtered.map(domain => {
-                const daysLeft = this.getDaysUntilRenewal(domain.renewalDate);
-                const status = this.getDomainStatus(daysLeft);
-                
-                return `
-                    <tr>
-                        <td>${domain.name}</td>
-                        <td>${domain.provider}</td>
-                        <td>${this.formatDate(domain.renewalDate)}</td>
-                        <td>$${domain.price}</td>
-                        <td>
-                            <span class="status-badge status-${status.class}">
-                                ${status.text}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="action-btn" onclick="app.editDomain('${domain.id}')">
-                                    <i data-lucide="edit-2"></i>
-                                </button>
-                                <button class="action-btn" onclick="app.viewDns('${domain.name}')">
-                                    <i data-lucide="globe"></i>
-                                </button>
-                                <button class="action-btn" onclick="app.deleteDomain('${domain.id}')">
-                                    <i data-lucide="trash-2"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+        if (!tbody) return;
 
-            if (window.lucide) {
-                lucide.createIcons();
-            }
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">No domains found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(domain => {
+            const daysLeft = this.getDaysUntilRenewal(domain.renewalDate);
+            const status = this.getDomainStatus(daysLeft);
+            
+            return `
+                <tr>
+                    <td>${domain.name}</td>
+                    <td>${domain.provider}</td>
+                    <td>${this.formatDate(domain.renewalDate)}</td>
+                    <td>$${domain.price}</td>
+                    <td>
+                        <span class="status-badge status-${status.class}">
+                            ${status.text}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="app.editDomain('${domain.id}')">
+                                <i data-lucide="edit-2"></i>
+                            </button>
+                            <button class="action-btn" onclick="app.viewDns('${domain.name}')">
+                                <i data-lucide="globe"></i>
+                            </button>
+                            <button class="action-btn" onclick="app.deleteDomain('${domain.id}')">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        if (window.lucide) {
+            lucide.createIcons();
         }
     }
 
@@ -912,7 +1098,7 @@ class DomainVault {
         const elements = document.querySelectorAll('[data-translate-key]');
         elements.forEach(el => {
             const key = el.dataset.translateKey;
-            const translation = this.translations[this.currentLang][key];
+            const translation = this.translations[this.currentLang]?.[key];
             if (translation) {
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                     el.placeholder = translation;
@@ -924,17 +1110,17 @@ class DomainVault {
     }
 
     translate(key) {
-        return this.translations[this.currentLang][key];
+        return this.translations[this.currentLang]?.[key] || key;
     }
 
     togglePasswordVisibility(e) {
         const icon = e.currentTarget;
         const input = icon.previousElementSibling;
         
-        if (input.type === 'password') {
+        if (input && input.type === 'password') {
             input.type = 'text';
             icon.setAttribute('data-lucide', 'eye-off');
-        } else {
+        } else if (input) {
             input.type = 'password';
             icon.setAttribute('data-lucide', 'eye');
         }
@@ -994,6 +1180,11 @@ class DomainVault {
     }
 
     downloadIcs() {
+        if (this.domains.length === 0) {
+            this.showToast('No domains to export', 'warning');
+            return;
+        }
+
         // Generate ICS file with domain renewals
         let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Domain Vault//EN\n';
         
@@ -1028,9 +1219,16 @@ class DomainVault {
 
     handleProfileSubmit(e) {
         e.preventDefault();
-        const username = document.getElementById('settingUsername').value;
+        const username = document.getElementById('settingUsername')?.value;
         if (username) {
-            document.getElementById('userName').textContent = username;
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) userNameEl.textContent = username;
+            
+            const userAvatar = document.getElementById('userAvatar');
+            if (userAvatar && !userAvatar.style.backgroundImage) {
+                userAvatar.textContent = username.split(' ').map(n => n[0]).join('').toUpperCase();
+            }
+            
             this.showToast('Profile updated successfully');
         }
     }
@@ -1058,13 +1256,25 @@ class DomainVault {
     }
 
     handleProfilePictureUpload(e) {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                document.getElementById('userAvatar').style.backgroundImage = `url('${e.target.result}')`;
-                document.getElementById('settingsAvatarPreview').style.backgroundImage = `url('${e.target.result}')`;
-                document.getElementById('userAvatar').textContent = '';
+                const userAvatar = document.getElementById('userAvatar');
+                const settingsAvatar = document.getElementById('settingsAvatarPreview');
+                
+                if (userAvatar) {
+                    userAvatar.style.backgroundImage = `url('${e.target.result}')`;
+                    userAvatar.style.backgroundSize = 'cover';
+                    userAvatar.textContent = '';
+                }
+                
+                if (settingsAvatar) {
+                    settingsAvatar.style.backgroundImage = `url('${e.target.result}')`;
+                    settingsAvatar.style.backgroundSize = 'cover';
+                    settingsAvatar.textContent = '';
+                }
+                
                 this.showToast('Profile picture updated');
             };
             reader.readAsDataURL(file);
@@ -1072,23 +1282,47 @@ class DomainVault {
     }
 
     removeProfilePicture() {
-        document.getElementById('userAvatar').style.backgroundImage = '';
-        document.getElementById('settingsAvatarPreview').style.backgroundImage = '';
-        document.getElementById('userAvatar').textContent = 'JD';
+        const userAvatar = document.getElementById('userAvatar');
+        const settingsAvatar = document.getElementById('settingsAvatarPreview');
+        const userName = document.getElementById('userName')?.textContent || 'JD';
+        
+        if (userAvatar) {
+            userAvatar.style.backgroundImage = '';
+            userAvatar.textContent = userName.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+        
+        if (settingsAvatar) {
+            settingsAvatar.style.backgroundImage = '';
+            settingsAvatar.textContent = userName.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+        
         this.showToast('Profile picture removed');
     }
 
     toggleTheme() {
         document.body.classList.toggle('light-theme');
         localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        
+        const themeIcon = document.querySelector('#themeToggle i');
+        if (themeIcon) {
+            themeIcon.setAttribute('data-lucide', document.body.classList.contains('light-theme') ? 'sun' : 'moon');
+            if (window.lucide) lucide.createIcons();
+        }
+        
         this.showToast(`Theme switched to ${document.body.classList.contains('light-theme') ? 'light' : 'dark'} mode`);
     }
 
     checkAuth() {
         // Simulate authentication
         this.currentUser = { name: 'John Doe', email: 'john@example.com' };
-        document.getElementById('userName').textContent = this.currentUser.name;
-        document.getElementById('userAvatar').textContent = this.currentUser.name.split(' ').map(n => n[0]).join('');
+        
+        const userNameEl = document.getElementById('userName');
+        const userAvatar = document.getElementById('userAvatar');
+        
+        if (userNameEl) userNameEl.textContent = this.currentUser.name;
+        if (userAvatar && !userAvatar.style.backgroundImage) {
+            userAvatar.textContent = this.currentUser.name.split(' ').map(n => n[0]).join('');
+        }
     }
 
     logout() {
@@ -1099,18 +1333,26 @@ class DomainVault {
     }
 
     renderExpensesChart() {
-        const ctx = document.getElementById('expensesChart')?.getContext('2d');
+        const canvas = document.getElementById('expensesChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.expensesChart) {
+            this.expensesChart.destroy();
+        }
 
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const data = new Array(12).fill(0);
 
         this.domains.forEach(domain => {
             const month = new Date(domain.renewalDate).getMonth();
-            data[month] += parseFloat(domain.price);
+            data[month] += parseFloat(domain.price) || 0;
         });
 
-        new Chart(ctx, {
+        this.expensesChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: months,
@@ -1154,15 +1396,27 @@ class DomainVault {
     }
 
     renderProvidersChart() {
-        const ctx = document.getElementById('providersChart')?.getContext('2d');
+        const canvas = document.getElementById('providersChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.providersChart) {
+            this.providersChart.destroy();
+        }
 
         const providerCounts = {};
         this.domains.forEach(domain => {
             providerCounts[domain.provider] = (providerCounts[domain.provider] || 0) + 1;
         });
 
-        new Chart(ctx, {
+        if (Object.keys(providerCounts).length === 0) {
+            providerCounts['No Data'] = 1;
+        }
+
+        this.providersChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: Object.keys(providerCounts),
@@ -1173,7 +1427,8 @@ class DomainVault {
                         '#ff7433',
                         '#ff9833',
                         '#ffbc33',
-                        '#ffe033'
+                        '#ffe033',
+                        '#ffcc80'
                     ],
                     borderWidth: 0
                 }]
@@ -1201,16 +1456,30 @@ class DomainVault {
         const savedColor = localStorage.getItem('accentColor');
         if (savedColor) {
             this.setAccentColor(savedColor);
+            
+            // Update active swatch
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                if (swatch.dataset.color === savedColor) {
+                    swatch.classList.add('active');
+                }
+            });
         }
 
         // Load saved theme
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.body.classList.add('light-theme');
+            const themeIcon = document.querySelector('#themeToggle i');
+            if (themeIcon) {
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
         }
     }
 
     initializeUI() {
+        // Hide loading indicator
+        this.hideLoading();
+
         // Initialize Lucide icons
         if (window.lucide) {
             lucide.createIcons();
@@ -1266,11 +1535,11 @@ class DomainVault {
 
     getDomainStatus(daysLeft) {
         if (daysLeft < 0) {
-            return { class: 'expired', text: this.translate('expired') || 'Expired' };
+            return { class: 'expired', text: 'Expired' };
         } else if (daysLeft <= 30) {
-            return { class: 'warning', text: this.translate('expiring') || 'Expiring Soon' };
+            return { class: 'warning', text: 'Expiring Soon' };
         } else {
-            return { class: 'active', text: this.translate('active') || 'Active' };
+            return { class: 'active', text: 'Active' };
         }
     }
 
@@ -1308,3 +1577,11 @@ class DomainVault {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new DomainVault();
 });
+
+// Also hide loading if DOMContentLoaded already fired
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'none';
+    }, 100);
+}
